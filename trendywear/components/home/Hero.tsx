@@ -5,7 +5,6 @@ import Link from "next/link";
 import Carousel from "./ui/Carousel";
 import Image from "next/image";
 import CategoryLink from "./ui/CategoryLink";
-import { MdArrowOutward } from "react-icons/md";
 
 export default function Hero() {
   // Carousel slides

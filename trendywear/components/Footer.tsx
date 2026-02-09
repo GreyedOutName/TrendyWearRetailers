@@ -29,7 +29,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-[#b91c1c] text-white py-16 border-t border-red-800">
+    <footer className="bg-[#c1121f] text-white py-16 border-t border-red-800">
       <div className="max-w-7xl mx-auto px-8 md:px-4 flex flex-col md:flex-row justify-between gap-8">
 
         {/* Left Section: Brand Info */}
