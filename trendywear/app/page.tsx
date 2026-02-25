@@ -1,7 +1,7 @@
-import Hero from "@/components/home/Hero";
-import Collections from "@/components/home/Collections";
-import WomensWear from "@/components/home/WomensWear";
-import MensWear from "@/components/home/MensWear";
+import Hero from "./home/Hero";
+import Collections from "./home/Collections";
+import WomensWear from "./home/WomensWear";
+import MensWear from "./home/MensWear";
 
 export default function Home() {
   return (

@@ -1,19 +1,12 @@
+"use client";
+
 import Image from 'next/image';
 import { MdFavoriteBorder, MdArrowOutward } from 'react-icons/md';
+import { womensWearData } from '../data/home/womensWear';
 
 export default function WomensWearScroll() {
-  const products = [
-    { id: 1, name: "Oversize Shirt", price: "$199.00", image: "/images/placeholder.jpg" },
-    { id: 2, name: "Hooded Jacket", price: "$199.00", image: "/images/placeholder.jpg" },
-    { id: 3, name: "Blue Oxford", price: "$199.00", image: "/images/placeholder.jpg" },
-    { id: 4, name: "Beige Knit", price: "$149.00", image: "/images/placeholder.jpg" },
-    { id: 5, name: "Casual Blazer", price: "$299.00", image: "/images/placeholder.jpg" },
-    { id: 6, name: "Cotton Tee", price: "$89.00", image: "/images/placeholder.jpg" },
-  ];
-
   return (
     <section className="w-full py-10 pl-8 bg-[#f8f9fa] overflow-hidden">
-      
       <div className="ml-4 md:ml-8 lg:ml-[calc((100vw-1300px)/2+2rem)] bg-[#b91c1c] rounded-l-[15px] flex flex-col lg:flex-row overflow-hidden relative min-h-[600px] py-8">
         
         {/* LEFT PANEL */}
@@ -35,17 +28,13 @@ export default function WomensWearScroll() {
 
         {/* RIGHT PANEL */}
         <div className="flex-1 min-w-0 bg-[#b91c1c] flex items-center relative">
-          
-          {/* SCROLL CONTAINER */}
           <div className="w-full flex items-center gap-6 px-6 py-8 overflow-x-auto hide-scrollbar scroll-smooth">
-            
-            {products.map((item) => (
+            {womensWearData.map((item) => (
               <div 
                 key={item.id} 
                 className="shrink-0 w-[280px] sm:w-[300px] group cursor-pointer"
               >
                 <div className="aspect-[3.5/4] bg-neutral-100 rounded-3xl overflow-hidden mb-5 relative transition-all duration-300 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-black/20">    
-                  {/* IMAGE */}
                   <Image
                     src={item.image}         
                     alt={item.name}
@@ -68,7 +57,6 @@ export default function WomensWearScroll() {
                 </div>
               </div>
             ))}
-            
             <div className="w-20 shrink-0" />
           </div>
         </div>
