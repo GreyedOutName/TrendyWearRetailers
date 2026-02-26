@@ -1,8 +1,37 @@
 "use client";
 
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { MdArrowBack } from "react-icons/md";
+import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+
+    router.push("/");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-full max-w-md mx-auto px-6 py-12 select-none">
@@ -18,24 +47,31 @@ export default function LoginPage() {
         </div>
 
         {/* Heading */}
-        <div className="mb-10 text-center">
+        <div className="mb-6 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
             Sign In
           </h2>
           <p className="text-gray-500">
-            Please enter your details to sign in.
+            Sign in with your email and password.
           </p>
         </div>
 
+        {/* Error */}
+        {error && (
+          <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
         {/* Form */}
-        <form action="#" method="POST" className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email */}
           <div>
             <label
               htmlFor="email"
               className="block text-sm font-medium text-gray-600 mb-1"
             >
-              Email / Username  
+              Email
             </label>
             <div className="relative">
               <input
@@ -43,6 +79,8 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="block w-full px-2 py-2 border-0 border-b-2 border-gray-300 bg-transparent focus:ring-0 focus:border-primary transition-colors"
               />
             </div>
@@ -57,12 +95,9 @@ export default function LoginPage() {
               >
                 Password
               </label>
-              <a
-                href="#"
-                className="text-xs font-medium text-primary hover:text-red-700 transition-colors"
-              >
-                Forgot Password?
-              </a>
+              <span className="text-xs font-medium text-primary">
+                (Forgot password? Use Supabase reset flow)
+              </span>
             </div>
 
             <div className="relative">
@@ -71,31 +106,21 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="block w-full px-2 py-2 border-0 border-b-2 border-gray-300 bg-transparent focus:ring-0 focus:border-primary transition-colors"
               />
             </div>
-          </div>
-
-          {/* Remember */}
-          <div className="flex items-center mt-6">
-            <input
-              id="remember-me"
-              name="remember-me"
-              type="checkbox"
-              className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary bg-transparent"
-            />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-500">
-              Remember me
-            </label>
           </div>
 
           {/* Button */}
           <div className="pt-4">
             <button
               type="submit"
-              className="w-full flex justify-center py-3 px-4 rounded shadow text-sm font-bold text-white bg-[#c1121f] hover:bg-[#a91c1c] hover:text-white transition-colors"
+              disabled={loading}
+              className="w-full flex justify-center py-3 px-4 rounded shadow text-sm font-bold text-white bg-[#c1121f] hover:bg-[#a91c1c] hover:text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Sign In
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </div>
         </form>
