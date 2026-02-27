@@ -206,7 +206,7 @@ export default function ProductPage() {
                     <Breadcrumb
                         items={[
                             { label: "Home", href: "/" },
-                            { label: "Product", href: "/products" },
+                            { label: "Product", href: "/products-page" },
                             { label: product.name },
                         ]}
                     />

@@ -19,6 +19,7 @@ type MensProduct = {
 
 export default function MensWear() {
   const [mensWearData, setMensWearData] = useState<MensProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function MensWear() {
 
       if (error || !items) {
         console.error("Error fetching mens wear:", error);
+        setLoading(false);
         return;
       }
 
@@ -67,29 +69,30 @@ export default function MensWear() {
       });
 
       setMensWearData(mapped);
+      setLoading(false);
     }
 
     fetchMensWear();
   }, []);
 
   return (
-    <section className="w-full bg-[#f8f9fa] py-16 overflow-hidden">
+    <section className="w-full bg-[#f8f9fa] py-8 sm:py-16 overflow-hidden">
       <div className="max-w-7xl mx-auto px-8">
         {/* Top Divider */}
-        <div className="border-t border-slate-300 w-full mb-12" />
+        <div className="border-t border-slate-300 w-full mb-8 sd:mb-12"/>
       </div>
 
-      <div className="relative flex flex-col lg:flex-row gap-12 items-center lg:pr-[calc((100vw-1280px)/2+2rem)] pr-8">
-        
+      <div className="max-w-7xl mx-auto w-full pr-4 md:pr-0 relative">
+      <div className="relative flex flex-col lg:flex-row gap-8 lg:gap-12 w-full lg:w-[calc(100%+10rem)] lg:-ml-[10rem] box-border lg:min-h-[400px]">        
         {/* LEFT PANEL */}
-        <div className="flex-1 min-w-0 flex relative justify-end">
-          
+        <div className="flex-1 min-w-0 flex relative justify-end order-2 lg-order-1">
           {/* SCROLL CONTAINER */}
-          <div className="flex items-center gap-6 px-6 py-8 overflow-x-auto hide-scrollbar scroll-smooth">
-            
-            {mensWearData.length === 0 ? (
-              <p className="text-slate-400 text-sm px-4">No items found.</p>
-            ) : (
+          <div className="flex items-center gap-6 px-6 py-8 overflow-x-auto hide-scrollbar scroll-smooth fade-edge-right">
+              {loading ? (
+                <p className="text-slate-400 text-sm px-4">Loading...</p>
+              ) : mensWearData.length === 0 ? (
+                <p className="text-slate-400 text-sm px-4">No items found.</p>
+              ) : (
               mensWearData.map((item) => (
                 <div 
                   key={item.id} 
@@ -120,7 +123,7 @@ export default function MensWear() {
 
                   {/* TEXT */}
                   <div className="text-white space-y-1">
-                    <h3 className="font-medium text-[#003049] text-xl tracking-wide">{item.name}</h3>
+                    <h3 className="font-medium text-[#003049] text-xl tracking-wide truncate">{item.name}</h3>
                     <p className="font-regular text-[#1E293B]">{item.price}</p>
                   </div>
                 </div>
@@ -133,9 +136,9 @@ export default function MensWear() {
         </div>
 
         {/* RIGHT SIDE: Text Content */}
-        <div className="lg:w-[420px] w-full pl-8 lg:pl-0 flex flex-col justify-between lg:items-end text-center lg:text-right order-1 lg:order-2 shrink-0 min-h-[400px]">
+        <div className="w-full lg:w-[400px] pl-8 lg:pl-0 flex flex-col justify-between lg:items-end lg:text-right order-1 lg:order-2 shrink-0 sm:min-h-[460px] order-1 lg-order-2">
           <div className="space-y-4 pt-4">
-            <h2 className="text-4xl md:text-6xl font-semibold tracking-wide mb-3 text-[#003049]">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-wide text-[#003049]">
               Men&apos;s Wear
             </h2>
             <p className="text-3xl font-regular tracking-wide opacity-90">
@@ -143,21 +146,17 @@ export default function MensWear() {
             </p>
           </div>
           
-          <Link 
-            href="/mens" 
-            className="inline-flex items-center gap-2 border-b border-slate-900 pb-1 text-slate-900 hover:opacity-70 transition group"
-          >
-            <span className="text-xl text-[#003049] font-medium group-hover:text-[#003049]-100 transition">
-              View All Product
-            </span>
+          <div className="pt-12 lg:pt-0 pb-1 border-b inline-flex items-center gap-2 w-fit cursor-pointer group">
+            <span className="text-xl font-medium group-hover:text-black-100 transition">View All Product</span>
             <MdArrowOutward className="text-2xl group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform ml-4" />
-          </Link>
+          </div>
         </div>
+      </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-8">
         {/* Bottom Divider */}
-        <div className="border-t border-slate-300 w-full mt-12" />
+        <div className="border-t border-slate-300 w-full mt-4 sm:mt-12" />
       </div>
 
       <style>{`
@@ -167,6 +166,10 @@ export default function MensWear() {
         .hide-scrollbar {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+       .fade-edge-right {
+          -webkit-mask-image: linear-gradient(to left, transparent 0%, black 5%);
+          mask-image: linear-gradient(to left, transparent 0%, black 5%);
         }
       `}</style>
     </section>

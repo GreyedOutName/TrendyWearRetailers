@@ -46,8 +46,8 @@ export default function Carousel({ slides, interval = 5000 }: CarouselProps) {
         {/* DARK OVERLAY */}
         <div className="absolute inset-0 bg-black/40"/>
 
-          <div className="absolute bottom-12 left-10 text-white space-y-4 z-20">
-            <h2 className="text-4xl font-semibold tracking-tight">{slide.title}</h2>
+          <div className="absolute bottom-18 sm:bottom-12 left-6 sm:left-10 sm:space-y-4 pr-6 text-white z-20">
+            <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">{slide.title}</h2>
             <p className="text-gray-300 text-sm max-w-md">{slide.description}</p>
             <Link
               href={slide.href}

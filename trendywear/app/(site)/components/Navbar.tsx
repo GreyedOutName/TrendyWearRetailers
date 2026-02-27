@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation'; 
+
 import { 
   MdOutlineSearch, 
   MdFavoriteBorder, 
@@ -12,6 +14,7 @@ import { HiOutlineMenu, HiOutlineX } from 'react-icons/hi';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname(); 
 
   const links = [
     { label: "Products", href: "/products-page" },
@@ -29,6 +32,17 @@ export default function Navbar() {
   const iconStyle =
     "p-2 rounded-full border border-[#003049] text-[#003049] hover:bg-[#003049]/10 transition flex items-center justify-center";
 
+  const getLinkStyle = (href: string, isIcon = false) => {
+    const isActive = pathname === href;
+    const base = "transition-all duration-300 flex items-center justify-center rounded-full border border-[#003049]";
+    
+    if (isActive) {
+      return `${base} bg-[#003049] text-white shadow-md ${isIcon ? 'p-2' : 'px-6 py-2 '}`;
+    }
+    
+    return `${base} text-[#003049] border-transparent hover:border-[#003049] hover:bg-[#003049]/5 ${isIcon ? 'p-2' : 'px-6 py-2 font-medium'}`;
+  };
+
   return (
     <nav className="w-full bg-[#f8f9fa] border-b border-gray-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 flex items-center">
@@ -36,7 +50,7 @@ export default function Navbar() {
         {/* Left Links */}
         <div className="hidden md:flex flex-1 justify-evenly text-[#003049] font-medium text-lg">
           {links.map((link, idx) => (
-            <Link key={idx} href={link.href} className="hover:text-black transition-colors">
+            <Link key={idx} href={link.href} className={getLinkStyle(link.href)}>
               {link.label}
             </Link>
           ))}

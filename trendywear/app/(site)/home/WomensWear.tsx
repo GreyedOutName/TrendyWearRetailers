@@ -17,6 +17,7 @@ type WomensProduct = {
 
 export default function WomensWearScroll() {
   const [womensWearData, setWomensWearData] = useState<WomensProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export default function WomensWearScroll() {
 
       if (error || !items) {
         console.error("Error fetching womens wear:", error);
+        setLoading(false);
         return;
       }
 
@@ -65,17 +67,20 @@ export default function WomensWearScroll() {
       });
 
       setWomensWearData(mapped);
+      setLoading(false);
     }
 
     fetchWomensWear();
   }, []);
 
   return (
-    <section className="w-full py-10 pl-8 bg-[#f8f9fa] overflow-hidden">
-      <div className="ml-4 md:ml-8 lg:ml-[calc((100vw-1300px)/2+2rem)] bg-[#b91c1c] rounded-l-[15px] flex flex-col lg:flex-row overflow-hidden relative min-h-[600px] py-8">
-        
+    <section className="w-full py-2 sm:py-10 pl-0 sd:pl-8 bg-[#f8f9fa] overflow-x-hidden">
+        <div className="max-w-7xl mx-auto w-full px-0 md:px-2">
+
+        <div className="bg-[#b91c1c] w-[calc(100%+4rem)] lg:w-[calc(100%+10rem)] rounded-l-[15px] flex flex-col lg:flex-row overflow-hidden relative min-h-[600px] py-8">
+            
         {/* LEFT PANEL */}
-        <div className="w-full lg:w-[550px] shrink-0 p-8 md:p-12 text-white flex flex-col justify-between z-10 relative">
+        <div className="w-full lg:w-[530px] shrink-0 p-8 md:p-12 text-white flex flex-col justify-between z-10 relative">
           <div className="space-y-4 pt-4">
             <h2 className="text-4xl text-[#FDF0D5] md:text-5xl lg:text-6xl font-semibold">
               Women&apos;s Wear
@@ -93,10 +98,13 @@ export default function WomensWearScroll() {
 
         {/* RIGHT PANEL */}
         <div className="flex-1 min-w-0 bg-[#b91c1c] flex items-center relative">
-          <div className="w-full flex items-center gap-6 px-6 py-8 overflow-x-auto hide-scrollbar scroll-smooth">
-            {womensWearData.length === 0 ? (
-              <p className="text-white/60 text-sm px-4">No items found.</p>
-            ) : (
+          {/* Scrollable  */}
+          <div className="w-full flex items-center gap-6 px-6 py-8 overflow-x-auto hide-scrollbar scroll-smooth fade-edge-left">
+              {loading ? (
+                <p className="text-slate-400 text-sm px-4">Loading...</p>
+              ) : womensWearData.length === 0 ? (
+                <p className="text-slate-400 text-sm px-4">No items found.</p>
+              ) :  (
               womensWearData.map((item) => (
                 <div 
                   key={item.id} 
@@ -121,7 +129,7 @@ export default function WomensWearScroll() {
                   </div>
 
                   <div className="text-white space-y-1">
-                    <h3 className="font-medium text-[#FDF0D5] text-xl tracking-wide">{item.name}</h3>
+                    <h3 className="font-medium text-[#FDF0D5] text-xl tracking-wide truncate">{item.name}</h3>
                     <p className="font-regular opacity-80">{item.price}</p>
                   </div>
                 </div>
@@ -129,6 +137,7 @@ export default function WomensWearScroll() {
             )}
             <div className="w-20 shrink-0" />
           </div>
+        </div>
         </div>
       </div>
 
