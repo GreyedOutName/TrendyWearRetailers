@@ -535,63 +535,6 @@ export default function ProductPage() {
                         </div>
                     </div>
                 </div>
-
-                {/* FOOTER */}
-                <footer className="bg-[#C1121F] mt-24">
-                    <div className="max-w-[1440px] mx-auto px-12 py-16 grid grid-cols-1 md:grid-cols-4 gap-10 text-sm">
-                        <div className="mt-19">
-                            <h3 className="font-bold text-3xl mb-2 text-[#F59E0B]">BEYOND</h3>
-                            <div className="inline-block">
-                                <p className="font-medium text-[#FDF0D5] text-xl whitespace-nowrap">
-                                    The Destination for the Distinguished.
-                                </p>
-                                <div className="h-[1px] bg-white w-full mt-2"></div>
-                            </div>
-                            <p className="text-[#FDF0D5] text-sm mt-2">
-                                © 2026 Beyond, All rights reserved.
-                            </p>
-                        </div>
-
-                        <div className="ml-0 md:ml-40">
-                            <p className="font-semibold mb-10 text-xl text-[#F59E0B]">Shop</p>
-                            <Link href="/products" className="text-[#FDF0D5] text-base mb-10 block hover:underline">
-                                Products
-                            </Link>
-                            <Link href="/new-in" className="text-[#FDF0D5] text-base mb-10 block hover:underline">
-                                New In
-                            </Link>
-                            <Link href="/sales" className="text-[#FDF0D5] text-base mb-10 block hover:underline">
-                                Sales
-                            </Link>
-                        </div>
-
-                        <div className="ml-0 md:ml-40">
-                            <p className="font-semibold mb-10 text-xl text-[#F59E0B]">Account</p>
-                            <Link href="/my-orders" className="text-[#FDF0D5] text-base mb-10 block hover:underline">
-                                My Orders
-                            </Link>
-                            <Link href="/shopping-cart" className="text-[#FDF0D5] text-base mb-10 block hover:underline">
-                                Shopping Cart
-                            </Link>
-                        </div>
-
-                        <div className="ml-0 md:ml-40">
-                            <p className="font-semibold mb-10 text-xl text-[#F59E0B]">Support</p>
-                            <Link href="/contact-us" className="text-[#FDF0D5] text-base mb-10 block hover:underline">
-                                Contact Us
-                            </Link>
-                            <Link href="/shipping-info" className="text-[#FDF0D5] text-base mb-10 block hover:underline">
-                                Shipping Info
-                            </Link>
-                            <Link href="/return" className="text-[#FDF0D5] text-base mb-10 block hover:underline">
-                                Return
-                            </Link>
-                            <Link href="/faq" className="text-[#FDF0D5] text-base mb-10 block hover:underline">
-                                FAQ
-                            </Link>
-                        </div>
-                    </div>
-                </footer>
             </div>
         </>
     );
