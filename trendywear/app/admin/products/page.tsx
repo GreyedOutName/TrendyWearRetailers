@@ -1,6 +1,6 @@
 "use client";
 
-import { FiPlus, FiMoreVertical } from "react-icons/fi";
+import { FiPlus } from "react-icons/fi";
 import { IoMdRemoveCircleOutline } from "react-icons/io";
 import { LuArrowUpDown } from "react-icons/lu";
 import { LuList } from "react-icons/lu";
@@ -27,7 +27,7 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="mb-12">
         {/* Title */}
-        <h1 className="text-3xl font-bold text-[#C1121F] tracking-tight">
+        <h1 className="text-[48px] font-bold text-[#C1121F] tracking-tight">
           Products
         </h1>
 
@@ -52,7 +52,7 @@ export default function ProductsPage() {
         <div className="col-span-4">Name</div>
 
         {/* Sales */}
-        <div className="col-span-1 flex items-center justify-center space-x-2 text-sm text-gray-800">
+        <div className="col-span-1 flex items-center justify-center space-x-2 text-[14px] text-[#8181A5]">
           <button
             className="p-1 rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
             aria-label="Sort Sales"
@@ -63,7 +63,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Qty */}
-        <div className="col-span-1 flex items-center justify-center space-x-2 text-sm text-gray-800">
+        <div className="col-span-1 flex items-center justify-center space-x-2 text-[14px] text-[#8181A5]">
           <button
             className="p-1 rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
             aria-label="Sort Qty"
@@ -74,7 +74,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Rating */}
-        <div className="col-span-2 flex items-center justify-center space-x-2 text-sm text-gray-800">
+        <div className="col-span-2 flex items-center justify-center space-x-2 text-[14px] text-[#8181A5]">
           <button
             className="p-1 rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
             aria-label="Sort Rating"
@@ -85,7 +85,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Price */}
-        <div className="col-span-2 flex items-center justify-center space-x-2 text-sm text-gray-800">
+        <div className="col-span-2 flex items-center justify-center space-x-2 text-[14px] text-[#8181A5]">
           <button
             className="p-1 rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
             aria-label="Sort Price"
@@ -96,7 +96,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Tag */}
-        <div className="col-span-1 flex items-center justify-center space-x-2 text-sm text-gray-800">
+        <div className="col-span-1 flex items-center justify-center space-x-2 text-[14px] text-[#8181A5]">
           <button
             className="p-1 rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
             aria-label="Sort Tag"
@@ -111,7 +111,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Rows */}
-      <div className="space-y-4 mb-75">
+      <div className="space-y-4 mb-60">
         {products.map((product) => (
           <div
             key={product.id}
