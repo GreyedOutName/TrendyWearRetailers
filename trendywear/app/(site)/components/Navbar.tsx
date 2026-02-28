@@ -31,8 +31,8 @@ export default function Navbar() {
 
   const icons = [
     { label: "Search", icon: <MdOutlineSearch size={22} />, href: "#" },
-    { label: "Wishlist", icon: <MdFavoriteBorder size={22} />, href: "#" },
-    { label: "Cart", icon: <MdOutlineShoppingCart size={22} />, href: "#" },
+    { label: "Wishlist", icon: <MdFavoriteBorder size={22} />, href: "wishlist" },
+    { label: "Cart", icon: <MdOutlineShoppingCart size={22} />, href: "shopping-cart" },
     { label: "Account", icon: <MdOutlinePersonOutline size={22} />, href: "#" },
   ];
 
