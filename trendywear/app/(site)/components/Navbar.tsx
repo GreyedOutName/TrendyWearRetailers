@@ -2,19 +2,26 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation'; 
+import { usePathname, useRouter} from 'next/navigation'; 
+
 
 import { 
   MdOutlineSearch, 
   MdFavoriteBorder, 
   MdOutlineShoppingCart, 
-  MdOutlinePersonOutline 
+  MdOutlinePersonOutline,
+  MdLogout,
 } from 'react-icons/md';
 import { HiOutlineMenu, HiOutlineX } from 'react-icons/hi';
+import { useUser } from '../context/UserContext';
+import { createClient } from "@/utils/supabase/client";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname(); 
+  const router = useRouter();
+  const { user, setUser} = useUser();
+  const supabase = createClient();
 
   const links = [
     { label: "Products", href: "/products-page" },
@@ -43,6 +50,43 @@ export default function Navbar() {
     return `${base} text-[#003049] border-transparent hover:border-[#003049] hover:bg-[#003049]/5 ${isIcon ? 'p-2' : 'px-6 py-2 font-medium'}`;
   };
 
+  const AccountDropdown = () => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleLogout = async ()  => {
+      await supabase.auth.signOut(); 
+      setUser(null); 
+      alert("You have been logged out.");
+      window.location.href = "/";
+    };
+
+    return (
+      <div className="relative inline-block">
+        <button 
+          title='Logout'
+          onClick={() => setIsOpen(!isOpen)}
+          className={iconStyle}
+        >
+          <MdOutlinePersonOutline size={22} />
+        </button>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
+            <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 shadow-xl rounded-lg py-1 z-50">
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 transition-colors"
+              >
+                <MdLogout size={18} />
+                Logout
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <nav className="w-full bg-[#f8f9fa] border-b border-gray-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 flex items-center">
@@ -65,11 +109,27 @@ export default function Navbar() {
 
         {/* Right Icons / Hamburger */}
         <div className="flex-1 hidden lg:flex justify-evenly items-center">
-          {icons.map((item, idx) => (
-            <button key={idx} className={iconStyle} aria-label={item.label}>
-              {item.icon}
-            </button>
-          ))}
+          {icons.map((item, idx) => {
+              const restricted = ["Wishlist", "Cart", "Account"];
+              if (item.label === "Account" && user) {
+                return <AccountDropdown key={idx} />;
+              }
+              return (
+                <button
+                  key={idx}
+                  className={iconStyle}
+                  onClick={() => {
+                    if (restricted.includes(item.label) && !user) {
+                      router.push("/login"); 
+                    } else if (item.href && item.label !== "Search") {
+                      router.push(item.href); 
+                    }                   
+                  }}
+                >
+                  <span>{item.icon}</span>
+                </button>
+              );
+            })}
         </div>
 
         {/* Hamburger (Mobile Only) */}
@@ -96,17 +156,28 @@ export default function Navbar() {
                 <span>{link.label}</span>
               </Link>
             ))}
-
-            {icons.map((item, idx) => (
-              <Link
-                key={idx}
-                href={item.href}
-                className="flex items-center space-x-3 p-2 hover:bg-[#003049]/10 rounded transition"
-              >
-                <span>{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            ))}
+            {icons.map((item, idx) => {
+              const restricted = ["Wishlist", "Cart", "Account"];
+              if (item.label === "Account" && user) {
+                return <AccountDropdown key={idx} />;
+              }
+              return (
+                <button
+                  key={idx}
+                  className="flex items-center space-x-3 p-2 hover:bg-[#003049]/10 rounded transition"
+                  onClick={() => {
+                    if (restricted.includes(item.label) && !user) {
+                      router.push("/login"); 
+                    } else if (item.href && item.label !== "Search") {
+                      router.push(item.href); 
+                    }                   
+                  }}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

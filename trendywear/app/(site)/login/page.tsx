@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MdArrowBack } from "react-icons/md";
 import { createClient } from "@/utils/supabase/client";
+import { useUser } from "../context/UserContext";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { setUser } = useUser();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -18,7 +20,7 @@ export default function LoginPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -28,6 +30,8 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
+
+    setUser(data.user);
 
     router.push("/");
   };
@@ -95,8 +99,8 @@ export default function LoginPage() {
               >
                 Password
               </label>
-              <span className="text-xs font-medium text-primary">
-                (Forgot password? Use Supabase reset flow)
+              <span className="text-xs font-medium text-primary text-gray-400 ">
+                Forgot password?
               </span>
             </div>
 
