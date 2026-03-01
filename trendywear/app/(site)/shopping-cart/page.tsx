@@ -49,13 +49,13 @@ export default function ShoppingCart() {
             </span>
           </div>
 
-          <div className="lg:mt-10">
+          <div className="lg:mt-2">
             {items.length > 0 ? (
               items.map((item) => (
                 <div key={item.id} className="flex flex-col md:grid md:grid-cols-12 items-center py-2 border-b border-gray-200 group">
                   <div className="w-full md:col-span-6 flex gap-8">
                     <div className="bg-gray-50 p-2 rounded">
-                      <img src={item.image} alt={item.name} className="w-24 h-24 md:w-28 md:h-28 object-cover" />
+                      <img src={item.image} alt={item.name} className="w-24 h-24 md:w-28 md:h-28 object-cover rounded-lg" />
                     </div>
                     <div className="flex flex-col justify-center">
                       <span className="font-black text-md md:text-xl text-gray-900 uppercase tracking-tight">{item.name}</span>
@@ -103,7 +103,7 @@ export default function ShoppingCart() {
 
             <button 
               disabled={items.length === 0}
-              className="w-full md:w-[320px] bg-black text-white py-2 md:py-6 text-xs font-black uppercase hover:bg-zinc-800 transition-all tracking-[0.5em] disabled:bg-gray-100 disabled:text-gray-300 active:scale-[0.98] shadow-2xl"
+              className="w-full md:w-[320px] bg-black text-white py-2 md:py-6 text-xs font-black uppercase hover:bg-zinc-800 transition-all tracking-[0.5em] disabled:bg-gray-100 disabled:text-gray-300 active:scale-[0.98] shadow-2xl rounded-lg"
             >
               Checkout
             </button>

@@ -31,8 +31,8 @@ export default function Navbar() {
 
   const icons = [
     { label: "Search", icon: <MdOutlineSearch size={22} />, href: "#" },
-    { label: "Wishlist", icon: <MdFavoriteBorder size={22} />, href: "wishlist" },
-    { label: "Cart", icon: <MdOutlineShoppingCart size={22} />, href: "shopping-cart" },
+    { label: "Favorites", icon: <MdFavoriteBorder size={22} />, href: "/favorites" },
+    { label: "Cart", icon: <MdOutlineShoppingCart size={22} />, href: "/shopping-cart" },
     { label: "Account", icon: <MdOutlinePersonOutline size={22} />, href: "#" },
   ];
 
@@ -50,7 +50,7 @@ export default function Navbar() {
     return `${base} text-[#003049] border-transparent hover:border-[#003049] hover:bg-[#003049]/5 ${isIcon ? 'p-2' : 'px-6 py-2 font-medium'}`;
   };
 
-  const AccountDropdown = () => {
+  const AccountDropdown = ({ label }: { label?: string }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleLogout = async ()  => {
@@ -60,14 +60,19 @@ export default function Navbar() {
       window.location.href = "/";
     };
 
+    const buttonClass = label 
+      ? "flex items-center space-x-3 p-2 hover:bg-[#003049]/10 rounded transition w-full" 
+      : iconStyle;
+
     return (
       <div className="relative inline-block">
         <button 
-          title='Logout'
+          title={label}
+          className={buttonClass}
           onClick={() => setIsOpen(!isOpen)}
-          className={iconStyle}
         >
-          <MdOutlinePersonOutline size={22} />
+          <span><MdOutlinePersonOutline size={22} /> </span>
+          <span>{label}</span>
         </button>
         {isOpen && (
           <>
@@ -110,7 +115,7 @@ export default function Navbar() {
         {/* Right Icons / Hamburger */}
         <div className="flex-1 hidden lg:flex justify-evenly items-center">
           {icons.map((item, idx) => {
-              const restricted = ["Wishlist", "Cart", "Account"];
+              const restricted = ["Favorites", "Cart", "Account"];
               if (item.label === "Account" && user) {
                 return <AccountDropdown key={idx} />;
               }
@@ -157,9 +162,9 @@ export default function Navbar() {
               </Link>
             ))}
             {icons.map((item, idx) => {
-              const restricted = ["Wishlist", "Cart", "Account"];
+              const restricted = ["Favorites", "Cart", "Account"];
               if (item.label === "Account" && user) {
-                return <AccountDropdown key={idx} />;
+                return <AccountDropdown key={idx} label={item.label} />;
               }
               return (
                 <button
