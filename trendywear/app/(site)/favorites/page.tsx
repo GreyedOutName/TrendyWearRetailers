@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { MdKeyboardBackspace } from "react-icons/md";
 import ProductCard from "../components/ProductCard";
+import Breadcrumb from "@/app/(site)/components/Breadcrumb";
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState([
@@ -36,18 +36,18 @@ export default function Favorites() {
       <div className="w-full max-w-7xl flex flex-col min-h-screen px-8">
         
         {/* HEADER: Spans the full 1280px width */}
-        <header className="py-10">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-gray-400 hover:text-black transition-colors mb-6 uppercase text-[10px] font-black tracking-[0.3em]"
-          >
-            <MdKeyboardBackspace className="text-xl" />
-            Return to Store
-          </Link>
+        <header className="pt-10 pb-4">
+          {/* BREADCRUMB */}
+          <Breadcrumb
+              items={[
+                  { label: "Home", href: "/" },
+                  { label: "Favorites" },
+              ]}
+          />
 
-          <div className="flex justify-between items-end border-b border-black pb-4">
-            <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tight ">
-              My Favorites
+          <div className="flex justify-between items-end pb-4">
+            <h1 className="text-2xl md:text-4xl font-black tracking-tight text-[#C1121F]">
+              Favorites
             </h1>
             <span className="font-black text-lg mb-2 tracking-widest uppercase text-gray-900">
               {favorites.length} Items

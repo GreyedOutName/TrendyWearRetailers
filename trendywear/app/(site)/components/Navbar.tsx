@@ -41,16 +41,23 @@ export default function Navbar() {
   const iconStyle =
     "p-2 rounded-full border border-[#003049] text-[#003049] hover:bg-[#003049]/10 transition flex items-center justify-center";
 
-  const getLinkStyle = (href: string, isIcon = false) => {
-    const isActive = pathname === href;
-    const base = "transition-all duration-300 flex items-center justify-center rounded-full border border-[#003049]";
-    
+const getLinkStyle = (href: string, isIcon = false) => {
+  const isActive = pathname === href;
+
+  if (isIcon) {
+    const iconBase = "flex items-center justify-center rounded-full border border-[#003049] transition-all duration-300 p-2";
     if (isActive) {
-      return `${base} bg-[#003049] text-white shadow-md ${isIcon ? 'p-2' : 'px-6 py-2 '}`;
+      return `${iconBase} bg-[#003049] text-white shadow-md scale-105`;
     }
-    
-    return `${base} text-[#003049] border-transparent hover:border-[#003049] hover:bg-[#003049]/5 ${isIcon ? 'p-2' : 'px-6 py-2 font-medium'}`;
-  };
+    return `${iconBase} bg-transparent text-[#003049] hover:bg-[#003049]/10`;
+  }
+
+  const textBase = "transition-all duration-300 flex items-center justify-center rounded-full px-6 py-2 font-medium border";
+  if (isActive) {
+    return `${textBase} bg-[#003049] text-white border-[#003049] shadow-md`;
+  }
+  return `${textBase} text-[#003049] border-transparent hover:bg-[#003049]/5`;
+};
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,7 +178,7 @@ export default function Navbar() {
               return (
                 <button
                   key={idx}
-                  className={iconStyle}
+                  className={getLinkStyle(item.href, true)}
                   onClick={() => {
                     if (item.label === "Search") {
                       setIsSearchOpen(true);
