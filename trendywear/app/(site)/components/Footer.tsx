@@ -14,7 +14,7 @@ export default function Footer() {
       title: "Account",
       links: [
         { label: "My Orders", href: "/orders" },
-        { label: "Shopping Cart", href: "/cart" },
+        { label: "Shopping Cart", href: "/shopping-cart" },
       ],
     },
     {

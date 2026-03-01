@@ -65,7 +65,12 @@ function AdminContent({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             <button className="w-full flex items-center gap-3 px-4 py-2 text-gray-500 hover:text-red-600 text-lg font-medium transition-colors"><FiSettings /> <span>Settings</span></button>
-            <button className="w-full flex items-center gap-3 px-4 py-2 text-red-600 mt-1 hover:bg-red-50 rounded-xl text-lg font-bold transition-all"><FiLogOut /> <span>Log out</span></button>
+            <Link href="/">
+              <button className="w-full flex items-center gap-3 px-4 py-2 text-red-600 mt-1 hover:bg-red-50 rounded-xl text-lg font-bold transition-all">
+                <FiLogOut />
+                <span>Log out</span>
+              </button>
+            </Link>
           </div>
         </div>
       </aside>

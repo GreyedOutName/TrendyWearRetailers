@@ -36,8 +36,8 @@ export default function ProductCard({
             {/* IMAGE CARD */}
             <Link href={`/products/${id}`}>
                 <div
-                    className="relative bg-gray border border-gray-300 rounded-2xl p-4 overflow-hidden transition-all duration-300
-          group-hover:-translate-y-1 group-hover:shadow-[0_12px_30px_rgba(0,0,0,0.15)]"
+                    className="relative bg-gray border border-[#A0A0A0] rounded-2xl p-0 overflow-hidden transition-all duration-300
+                    group-hover:-translate-y-1 group-hover:shadow-[0_12px_30px_rgba(0,0,0,0.15)]"
                 >
                     <div className="relative h-64 rounded-xl overflow-hidden">
                         <Image

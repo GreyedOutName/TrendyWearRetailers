@@ -2,19 +2,28 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation'; 
+import { usePathname, useRouter} from 'next/navigation'; 
+
 
 import { 
   MdOutlineSearch, 
   MdFavoriteBorder, 
   MdOutlineShoppingCart, 
-  MdOutlinePersonOutline 
+  MdOutlinePersonOutline,
+  MdLogout,
 } from 'react-icons/md';
 import { HiOutlineMenu, HiOutlineX } from 'react-icons/hi';
+import { useUser } from '../context/UserContext';
+import { createClient } from "@/utils/supabase/client";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname(); 
+  const router = useRouter();
+  const { user, setUser} = useUser();
+  const supabase = createClient();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const links = [
     { label: "Products", href: "/products-page" },
@@ -24,8 +33,8 @@ export default function Navbar() {
 
   const icons = [
     { label: "Search", icon: <MdOutlineSearch size={22} />, href: "#" },
-    { label: "Wishlist", icon: <MdFavoriteBorder size={22} />, href: "#" },
-    { label: "Cart", icon: <MdOutlineShoppingCart size={22} />, href: "#" },
+    { label: "Favorites", icon: <MdFavoriteBorder size={22} />, href: "/favorites" },
+    { label: "Cart", icon: <MdOutlineShoppingCart size={22} />, href: "/shopping-cart" },
     { label: "Account", icon: <MdOutlinePersonOutline size={22} />, href: "#" },
   ];
 
@@ -43,8 +52,97 @@ export default function Navbar() {
     return `${base} text-[#003049] border-transparent hover:border-[#003049] hover:bg-[#003049]/5 ${isIcon ? 'p-2' : 'px-6 py-2 font-medium'}`;
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/products-page?search=${encodeURIComponent(searchQuery)}`);
+      setIsSearchOpen(false);
+      setSearchQuery("");
+    }
+  };
+
+  const AccountDropdown = ({ label }: { label?: string }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleLogout = async ()  => {
+      await supabase.auth.signOut(); 
+      setUser(null); 
+      alert("You have been logged out.");
+      window.location.href = "/";
+    };
+
+    const buttonClass = label 
+      ? "flex items-center space-x-3 p-2 hover:bg-[#003049]/10 rounded transition w-full" 
+      : iconStyle;
+
+    return (
+      <div className="relative inline-block">
+        <button 
+          title={label}
+          className={buttonClass}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <span><MdOutlinePersonOutline size={22} /> </span>
+          <span>{label}</span>
+        </button>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
+            <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 shadow-xl rounded-lg py-1 z-50">
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 transition-colors"
+              >
+                <MdLogout size={18} />
+                Logout
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <nav className="w-full bg-[#f8f9fa] border-b border-gray-300">
+      
+     {/* Backdrop */}
+      {isSearchOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[90] animate-in fade-in duration-300" 
+          onClick={() => setIsSearchOpen(false)} 
+        />
+      )}
+
+      {/* Search Bar */}
+      <div className={`
+        fixed top-0 left-0 w-full bg-white shadow-2xl z-[100] transition-all duration-300 ease-in-out
+        ${isSearchOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}
+      `}>
+        <div className="max-w-7xl mx-auto px-6 py-8 flex items-center gap-6">
+          <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center border-b-2 border-[#003049] py-2">
+            <MdOutlineSearch size={30} className="text-[#003049] mr-4" />
+            <input
+              autoFocus={isSearchOpen}
+              type="text"
+              placeholder="Search for products..."
+              className="bg-transparent border-none outline-none text-2xl w-full text-[#003049] placeholder:text-gray-400 font-light"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </form>
+
+          <button 
+            type="button"
+            onClick={() => setIsSearchOpen(false)}
+            className="p-2 text-[#003049] hover:bg-gray-100 rounded-full transition-all flex flex-col items-center"
+          >
+            <HiOutlineX size={32} />
+            <span className="text-[10px] uppercase font-bold">Close</span>
+          </button>
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 flex items-center">
 
         {/* Left Links */}
@@ -65,11 +163,29 @@ export default function Navbar() {
 
         {/* Right Icons / Hamburger */}
         <div className="flex-1 hidden lg:flex justify-evenly items-center">
-          {icons.map((item, idx) => (
-            <button key={idx} className={iconStyle} aria-label={item.label}>
-              {item.icon}
-            </button>
-          ))}
+          {icons.map((item, idx) => {
+              const restricted = ["Favorites", "Cart", "Account"];
+              if (item.label === "Account" && user) {
+                return <AccountDropdown key={idx} />;
+              }
+              return (
+                <button
+                  key={idx}
+                  className={iconStyle}
+                  onClick={() => {
+                    if (item.label === "Search") {
+                      setIsSearchOpen(true);
+                    } else if (restricted.includes(item.label) && !user) {
+                      router.push("/login"); 
+                    } else if (item.href && item.label !== "Search") {
+                      router.push(item.href); 
+                    }                   
+                  }}
+                >
+                  <span>{item.icon}</span>
+                </button>
+              );
+            })}
         </div>
 
         {/* Hamburger (Mobile Only) */}
@@ -96,17 +212,28 @@ export default function Navbar() {
                 <span>{link.label}</span>
               </Link>
             ))}
-
-            {icons.map((item, idx) => (
-              <Link
-                key={idx}
-                href={item.href}
-                className="flex items-center space-x-3 p-2 hover:bg-[#003049]/10 rounded transition"
-              >
-                <span>{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            ))}
+            {icons.map((item, idx) => {
+              const restricted = ["Favorites", "Cart", "Account"];
+              if (item.label === "Account" && user) {
+                return <AccountDropdown key={idx} label={item.label} />;
+              }
+              return (
+                <button
+                  key={idx}
+                  className="flex items-center space-x-3 p-2 hover:bg-[#003049]/10 rounded transition"
+                  onClick={() => {
+                    if (restricted.includes(item.label) && !user) {
+                      router.push("/login"); 
+                    } else if (item.href && item.label !== "Search") {
+                      router.push(item.href); 
+                    }                   
+                  }}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

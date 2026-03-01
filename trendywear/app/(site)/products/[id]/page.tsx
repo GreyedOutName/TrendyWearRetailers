@@ -219,7 +219,7 @@ export default function ProductPage() {
                     <div className="flex flex-col md:flex-row gap-6">
                         {/* LEFT IMAGES */}
                         <div
-                            className="bg-[#D9D9D9] p-4 rounded-2xl flex-shrink-0 w-full md:w-[65%]"
+                            className="bg-[#D9D9D9]/15 border border-[#D9D9D9] p-4 rounded-2xl flex-shrink-0 w-full md:w-[65%]"
                         >
                             {/* BIG IMAGE */}
                             <div className="relative w-full h-[520px] rounded-2xl overflow-hidden">
@@ -250,7 +250,7 @@ export default function ProductPage() {
                         </div>
 
                         {/* RIGHT INFO */}
-                        <div className="border-[#D9D9D9] border rounded-2xl p-6 bg-white flex-1">
+                        <div className="bg-[#D9D9D9]/15 border-[#D9D9D9] border rounded-2xl p-6 flex-1">
                             <h1 className="text-[36px] text-[#003049] font-semibold mb-1">
                                 {product.name}
                             </h1>
@@ -285,7 +285,7 @@ export default function ProductPage() {
                                         <button
                                             key={size}
                                             onClick={() => setSelectedSize(size)}
-                                            className={`w-9 h-9 rounded-full text-xs border ${selectedSize === size
+                                            className={`h-[54px] w-[54px] rounded-full text-xs border ${selectedSize === size
                                                 ? "bg-[#C1121F] text-white border-[#C1121F]"
                                                 : "bg-gray-200 border-gray-200"
                                                 }`}
