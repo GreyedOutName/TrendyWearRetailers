@@ -1,223 +1,718 @@
 "use client";
 
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiX, FiEdit2, FiTrash2, FiSearch, FiChevronUp, FiChevronDown } from "react-icons/fi";
 import { IoMdRemoveCircleOutline } from "react-icons/io";
-import { LuArrowUpDown } from "react-icons/lu";
 import { LuList } from "react-icons/lu";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useTransition, useRef } from "react";
+import { createPortal } from "react-dom";
+import { createItem } from "@/app/actions/admin/CreateItem";
+import { updateItem } from "@/app/actions/admin/UpdateItem";
+import { deleteItem } from "@/app/actions/admin/DeleteItem";
+import { createClient } from "@/utils/supabase/client";
 
-export default function ProductsPage() {
-  const [selected, setSelected] = useState<number[]>([1]);
+//  Global styles ──────────────────────────────────────────────────────────────
+const GLOBAL_STYLES = `
+  .products-title { font-weight: 700; letter-spacing: -0.02em; }
 
-  const products = [
-    { id: 1, name: "Knitted Sweater" },
-    { id: 2, name: "Knitted Sweater" },
-    { id: 3, name: "Knitted Sweater" },
-  ];
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes spinIn {
+    from { transform: rotate(-180deg) scale(0.4); opacity: 0; }
+    to   { transform: rotate(0deg)    scale(1);   opacity: 1; }
+  }
+  @keyframes pulseGlow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(193,18,31,0.2); }
+    50%     { box-shadow: 0 0 0 7px rgba(193,18,31,0); }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -500px 0; }
+    100% { background-position: 500px 0; }
+  }
 
-  const toggleSelect = (id: number) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+  .fade-slide-in { animation: fadeSlideIn 0.35s ease both; }
+  .row-in        { animation: rowIn 0.3s ease both; }
+  .spin-in       { animation: spinIn 0.22s cubic-bezier(.34,1.56,.64,1) both; }
+  .pulse-glow    { animation: pulseGlow 2s ease infinite; }
+
+  .shimmer-line {
+    background: linear-gradient(90deg, #f3f3f3 25%, #e8e8e8 50%, #f3f3f3 75%);
+    background-size: 500px 100%;
+    animation: shimmer 1.5s ease infinite;
+    border-radius: 6px;
+  }
+
+  .sort-btn {
+    transition: color 0.18s, background 0.2s, transform 0.15s;
+  }
+  .sort-btn:hover { transform: translateY(-1px); }
+
+  .product-row {
+    transition: box-shadow 0.22s, background 0.18s;
+  }
+  .product-row:hover {
+    box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+    background: #ffffff !important;
+  }
+
+  .tag-pill {
+    transition: box-shadow 0.15s;
+    cursor: default;
+  }
+  .tag-pill:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+  .action-btn {
+    transition: background 0.15s, color 0.15s, opacity 0.15s;
+  }
+  .action-btn:hover { opacity: 0.85; }
+
+  .modal-overlay { animation: fadeSlideIn 0.18s ease both; }
+  .modal-card    { animation: fadeSlideIn 0.26s cubic-bezier(.34,1.2,.64,1) both; }
+
+  .search-input:focus {
+    box-shadow: 0 0 0 3px rgba(193,18,31,0.1);
+  }
+
+  .page-btn {
+    transition: background 0.14s, color 0.14s, transform 0.12s;
+  }
+  .page-btn:hover:not(:disabled) { transform: scale(1.1); }
+`;
+
+//  Types ──────────────────────────────────────────────────────────────
+type Product = {
+  id: number;
+  name: string;
+  description: string;
+  tags: string[];
+  image_id: string[];
+  is_active: boolean;
+  created_at: string;
+  currentPrice?: number;
+};
+
+type SortKey = "price" | "name" | "tags" | null;
+type SortDir = "asc" | "desc";
+
+//  Sort Icon 
+function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
+  if (!active)
+    return (
+      <span className="flex flex-col gap-[1px] opacity-25">
+        <FiChevronUp className="w-3 h-3 -mb-1" />
+        <FiChevronDown className="w-3 h-3" />
+      </span>
     );
+  return dir === "asc"
+    ? <FiChevronUp  className="w-4 h-4 spin-in text-[#C1121F]" />
+    : <FiChevronDown className="w-4 h-4 spin-in text-[#C1121F]" />;
+}
+
+//  Sort Header ──────────────────────────────────────────────────────────────
+function SortHeader({
+  label, sortKey, current, dir, onSort, disabled = false,
+}: {
+  label: string; sortKey: SortKey; current: SortKey; dir: SortDir;
+  onSort: (k: SortKey) => void; disabled?: boolean;
+}) {
+  const active = !disabled && current === sortKey;
+  return (
+    <button
+      onClick={() => !disabled && onSort(sortKey)}
+      disabled={disabled}
+      className={`sort-btn flex items-center justify-center gap-1.5 text-[11px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-lg ${
+        disabled
+          ? "text-gray-300 cursor-default"
+          : active
+          ? "text-[#C1121F] bg-red-50"
+          : "text-[#8181A5] hover:text-[#1C1D21] hover:bg-gray-100"
+      }`}
+    >
+      {!disabled && <SortIcon active={active} dir={dir} />}
+      {label}
+    </button>
+  );
+}
+
+//   ─────────────────────────────────────────────────────────────
+function SkeletonRow() {
+  return (
+    <div className="grid grid-cols-12 items-center bg-[#F9FAFB] rounded-2xl px-6 py-4">
+      <div className="col-span-4 flex items-center gap-4">
+        <div className="w-4 h-4 shimmer-line rounded" />
+        <div className="w-12 h-12 shimmer-line rounded-xl shrink-0" />
+        <div className="h-4 w-36 shimmer-line" />
+      </div>
+      {[1, 1, 2, 2, 1].map((span, i) => (
+        <div key={i} className={`col-span-${span} flex flex-col items-center gap-1.5`}>
+          <div className="h-4 w-10 shimmer-line" />
+          <div className="h-3 w-7 shimmer-line" />
+        </div>
+      ))}
+      <div className="col-span-1 flex justify-end">
+        <div className="w-8 h-8 shimmer-line rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+//  Modal Wrapper ────────────────────────────────────────────────────────────
+function ModalWrapper({ onClose, title, children }: {
+  onClose: () => void; title: string; children: React.ReactNode;
+}) {
+  return (
+    <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[4px]">
+      <div className="modal-card bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-100">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="products-title text-xl text-[#1C1D21]">{title}</h2>
+          <button onClick={onClose} className="action-btn p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+//  Field ────────────────────────────────────────────────────────────────────
+function Field({ label, value, onChange, placeholder, textarea, type }: {
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; textarea?: boolean; type?: string;
+}) {
+  const cls = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 bg-gray-50 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C1121F] transition";
+  return (
+    <div>
+      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{label}</label>
+      {textarea
+        ? <textarea rows={3} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={cls} />
+        : <input type={type ?? "text"} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={cls} />}
+    </div>
+  );
+}
+
+//  Add Modal ────────────────────────────────────────────────────────────────
+function AddItemModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({ name: "", description: "", tags: "", image_id: "", basePrice: "" });
+
+  const handleSubmit = () => {
+    setError("");
+    if (!form.name || !form.description || !form.basePrice) { setError("Name, description and price are required."); return; }
+    startTransition(async () => {
+      try {
+        const tagsArray = form.tags.split(",").map(t => t.trim()).filter(Boolean);
+        await createItem({
+          name: form.name, description: form.description,
+          tags: JSON.stringify(tagsArray),
+          image_id: form.image_id ? `["${form.image_id}"]` : '["placeholder"]',
+          basePrice: parseFloat(form.basePrice),
+        });
+        onSuccess(); onClose();
+      } catch (e: any) { setError(e.message); }
+    });
   };
 
   return (
-    <div className="w-full">
-      {/* Header */}
-      <div className="mb-12">
-        {/* Title */}
-        <h1 className="text-[48px] font-bold text-[#C1121F] tracking-tight">
-          Products
-        </h1>
+    <ModalWrapper onClose={onClose} title="Add New Item">
+      <div className="space-y-4">
+        <Field label="Product Name" value={form.name} onChange={v => setForm({ ...form, name: v })} placeholder="e.g. Knitted Sweater" />
+        <Field label="Description" value={form.description} onChange={v => setForm({ ...form, description: v })} placeholder="Product description..." textarea />
+        <Field label="Tags (comma separated)" value={form.tags} onChange={v => setForm({ ...form, tags: v })} placeholder="e.g. Women, Tops" />
+        <Field label="Image ID" value={form.image_id} onChange={v => setForm({ ...form, image_id: v })} placeholder="" />
+        <Field label="Base Price (₱)" value={form.basePrice} onChange={v => setForm({ ...form, basePrice: v })} placeholder="e.g. 999" type="number" />
+        {error && <p className="text-red-500 text-xs font-semibold bg-red-50 px-3 py-2 rounded-lg border border-red-100">{error}</p>}
+        <div className="flex justify-end gap-2 pt-2">
+          <button onClick={onClose} className="action-btn px-5 py-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 text-sm font-medium">Cancel</button>
+          <button onClick={handleSubmit} disabled={isPending} className="action-btn px-5 py-2 rounded-xl bg-[#C1121F] text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-60 pulse-glow">
+            {isPending ? "Creating..." : "Create Item"}
+          </button>
+        </div>
+      </div>
+    </ModalWrapper>
+  );
+}
 
-        {/* Buttons Row */}
-        <div className="flex justify-end mt-6">
-          <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 bg-blue-50 text-blue-600 px-5 py-3 rounded-xl text-[14px] font-medium hover:bg-blue-100 transition">
-              <FiPlus size={24} />
-              Add Item
-            </button>
+// ─── Edit Modal ───────────────────────────────────────────────────────────────
+function EditItemModal({ product, onClose, onSuccess }: { product: Product; onClose: () => void; onSuccess: () => void }) {
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({ name: product.name, description: product.description, tags: product.tags?.join(", ") ?? "" });
 
-            <button className="flex items-center gap-2 bg-[#A52A2A] text-white px-5 py-3 rounded-xl text-[14px] font-semibold hover:bg-red-700 transition">
-              <IoMdRemoveCircleOutline size={24} />
-              Remove
-            </button>
+  const handleSubmit = () => {
+    setError("");
+    if (!form.name || !form.description) { setError("Name and description are required."); return; }
+    startTransition(async () => {
+      try {
+        const tagsArray = form.tags.split(",").map(t => t.trim()).filter(Boolean);
+        await updateItem({ itemId: product.id, name: form.name, description: form.description, tags: JSON.stringify(tagsArray) });
+        onSuccess(); onClose();
+      } catch (e: any) { setError(e.message); }
+    });
+  };
+
+  return (
+    <ModalWrapper onClose={onClose} title="Edit Item">
+      <div className="space-y-4">
+        <Field label="Product Name" value={form.name} onChange={v => setForm({ ...form, name: v })} />
+        <Field label="Description" value={form.description} onChange={v => setForm({ ...form, description: v })} textarea />
+        <Field label="Tags (comma separated)" value={form.tags} onChange={v => setForm({ ...form, tags: v })} />
+        {error && <p className="text-red-500 text-xs font-semibold bg-red-50 px-3 py-2 rounded-lg border border-red-100">{error}</p>}
+        <div className="flex justify-end gap-2 pt-2">
+          <button onClick={onClose} className="action-btn px-5 py-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 text-sm font-medium">Cancel</button>
+          <button onClick={handleSubmit} disabled={isPending} className="action-btn px-5 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60">
+            {isPending ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </ModalWrapper>
+  );
+}
+
+// ─── Delete Modal ─────────────────────────────────────────────────────────────
+function DeleteConfirmModal({ product, onClose, onSuccess }: { product: Product; onClose: () => void; onSuccess: () => void }) {
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState("");
+
+  const handleDelete = () => {
+    startTransition(async () => {
+      try { await deleteItem(product.id); onSuccess(); onClose(); }
+      catch (e: any) { setError(e.message); }
+    });
+  };
+
+  return (
+    <ModalWrapper onClose={onClose} title="Remove Item">
+      <div className="space-y-4">
+        <p className="text-gray-500 text-sm leading-relaxed">
+          Are you sure you want to remove{" "}
+          <span className="font-bold text-[#1C1D21]">"{product.name}"</span>?
+          <br />
+          <span className="text-xs text-gray-400 mt-1 block">It will be not permanently deleted.</span>
+        </p>
+        {error && <p className="text-red-500 text-xs font-semibold bg-red-50 px-3 py-2 rounded-lg border border-red-100">{error}</p>}
+        <div className="flex justify-end gap-2 pt-2">
+          <button onClick={onClose} className="action-btn px-5 py-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 text-sm font-medium">Cancel</button>
+          <button onClick={handleDelete} disabled={isPending} className="action-btn px-5 py-2 rounded-xl bg-[#A52A2A] text-white text-sm font-semibold hover:bg-red-900 disabled:opacity-60">
+            {isPending ? "Removing..." : "Yes, Remove"}
+          </button>
+        </div>
+      </div>
+    </ModalWrapper>
+  );
+}
+
+//  Row Menu ─────────────────────────────────────────────────────────────────
+function RowMenu({ product, onEdit, onDelete }: { product: Product; onEdit: (p: Product) => void; onDelete: (p: Product) => void }) {
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (btnRef.current && btnRef.current.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const handleClick = () => {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY + 6,
+        left: rect.right - 160,
+      });
+    }
+    setOpen(p => !p);
+  };
+
+  const menu = open ? (
+    <div
+      onMouseDown={e => e.stopPropagation()}
+      style={{ position: "absolute", top: coords.top, left: coords.left, zIndex: 99999, width: 160 }}
+      className="bg-[#1C1D21] rounded-xl shadow-2xl py-1"
+    >
+      <button
+        onClick={() => { setOpen(false); onEdit(product); }}
+        className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white transition"
+      >
+        <FiEdit2 className="w-3.5 h-3.5" /> Edit
+      </button>
+      <div className="h-px bg-white/10 mx-3" />
+      <button
+        onClick={() => { setOpen(false); onDelete(product); }}
+        className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-red-400 hover:bg-white/10 hover:text-red-300 transition"
+      >
+        <FiTrash2 className="w-3.5 h-3.5" /> Remove
+      </button>
+    </div>
+  ) : null;
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={handleClick}
+        className={`p-2 rounded-full transition-colors ${open ? "bg-gray-200 text-[#1C1D21]" : "text-[#7D7D7D] hover:bg-gray-200"}`}
+      >
+        <LuList className="w-5 h-5" />
+      </button>
+      {typeof window !== "undefined" && menu && createPortal(menu, document.body)}
+    </>
+  );
+}
+
+//  Tag color map ────────────────────────────────────────────────────────────
+const TAG_COLORS: Record<string, string> = {
+  Women:       "bg-pink-100 text-pink-700",
+  Men:         "bg-blue-100 text-blue-700",
+  Tops:        "bg-amber-100 text-amber-700",
+  Dress:       "bg-purple-100 text-purple-700",
+  Bottoms:     "bg-emerald-100 text-emerald-700",
+  Accessories: "bg-orange-100 text-orange-700",
+  Shirt:       "bg-sky-100 text-sky-700",
+  Jacket:      "bg-yellow-100 text-yellow-800",
+  Trouser:     "bg-indigo-100 text-indigo-700",
+  Short:       "bg-teal-100 text-teal-700",
+  Polo:        "bg-cyan-100 text-cyan-700",
+};
+const getTagColor = (tag: string) => TAG_COLORS[tag] ?? "bg-gray-100 text-gray-600";
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+const ITEMS_PER_PAGE = 10;
+
+export default function ProductsPage() {
+  const supabase = createClient();
+
+  const [products, setProducts]       = useState<Product[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [selected, setSelected]       = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages]   = useState(1);
+  const [totalCount, setTotalCount]   = useState(0);
+  const [search, setSearch]           = useState("");
+  const [sortKey, setSortKey]         = useState<SortKey>(null);
+  const [sortDir, setSortDir]         = useState<SortDir>("asc");
+
+  const [showAdd, setShowAdd]             = useState(false);
+  const [editProduct, setEditProduct]     = useState<Product | null>(null);
+  const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [isPending, startTransition]      = useTransition();
+
+  //  Fetch ──────────────────────────────────────────────────────────────────
+  const fetchProducts = async (page = 1, query = "") => {
+    setLoading(true);
+    const from = (page - 1) * ITEMS_PER_PAGE;
+    const to   = from + ITEMS_PER_PAGE - 1;
+
+    let req = supabase
+      .from("items")
+      .select("*", { count: "exact" })
+      .eq("is_active", true)
+      .order("id", { ascending: true })
+      .range(from, to);
+
+    if (query.trim()) req = req.ilike("name", `%${query.trim()}%`);
+
+    const { data, error, count } = await req;
+
+    if (!error && data) {
+      const withPrices = await Promise.all(
+        data.map(async item => {
+          const { data: priceData } = await supabase
+            .from("prices").select("price").eq("item_id", item.id)
+            .or(`valid_to.is.null,valid_to.gte.${new Date().toISOString()}`)
+            .order("priority", { ascending: false }).limit(1).single();
+          return { ...item, currentPrice: priceData?.price ?? null };
+        })
+      );
+      setProducts(withPrices);
+      setTotalCount(count ?? 0);
+      setTotalPages(Math.max(1, Math.ceil((count ?? 0) / ITEMS_PER_PAGE)));
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchProducts(currentPage, search); }, [currentPage]);
+
+  useEffect(() => {
+    const t = setTimeout(() => { setCurrentPage(1); fetchProducts(1, search); }, 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // ── Sorting (client-side on current page) ──────────────────────────────────
+  const handleSort = (key: SortKey) => {
+    if (!key) return;
+    if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const sortedProducts = [...products].sort((a, b) => {
+    if (!sortKey) return 0;
+    let av: any, bv: any;
+    if (sortKey === "price") { av = a.currentPrice ?? 0; bv = b.currentPrice ?? 0; }
+    else if (sortKey === "name") { av = a.name.toLowerCase(); bv = b.name.toLowerCase(); }
+    else if (sortKey === "tags") { av = a.tags?.[0]?.toLowerCase() ?? ""; bv = b.tags?.[0]?.toLowerCase() ?? ""; }
+    else return 0;
+    return sortDir === "asc" ? (av < bv ? -1 : av > bv ? 1 : 0) : (av > bv ? -1 : av < bv ? 1 : 0);
+  });
+
+  const toggleSelect = (id: number) =>
+    setSelected(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
+
+  const handleBulkRemove = () => {
+    if (!selected.length) return;
+    startTransition(async () => {
+      await Promise.all(selected.map(id => deleteItem(id)));
+      setSelected([]);
+      fetchProducts(currentPage, search);
+    });
+  };
+
+  return (
+    <div className="products-page w-full">
+      <style dangerouslySetInnerHTML={{ __html: GLOBAL_STYLES }} />
+
+      {/* Modals */}
+      {showAdd      && <AddItemModal     onClose={() => setShowAdd(false)}       onSuccess={() => fetchProducts(currentPage, search)} />}
+      {editProduct  && <EditItemModal    product={editProduct}  onClose={() => setEditProduct(null)}   onSuccess={() => fetchProducts(currentPage, search)} />}
+      {deleteProduct && <DeleteConfirmModal product={deleteProduct} onClose={() => setDeleteProduct(null)} onSuccess={() => fetchProducts(currentPage, search)} />}
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <div className="fade-slide-in mb-8">
+        {/* Title row */}
+        <div className="flex items-center justify-between gap-6">
+          <div className="flex items-baseline gap-3 shrink-0">
+            <h1 className="products-title text-3xl text-[#C1121F] tracking-tight">
+              Products
+            </h1>
+            {!loading && (
+              <span className="text-[11px] font-bold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full uppercase tracking-wide">
+                {totalCount} items
+              </span>
+            )}
           </div>
-        </div>
-      </div>
 
-      {/* Table Header */}
-      <div className="grid grid-cols-12 px-6 py-4 text-[14px] text-[#8181A5] font-semibold">
-        <div className="col-span-4">Name</div>
-
-        {/* Sales */}
-        <div className="col-span-1 flex items-center justify-center space-x-2 text-[14px] text-[#8181A5]">
-          <button
-            className="p-1 rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
-            aria-label="Sort Sales"
-          >
-            <LuArrowUpDown className="w-4 h-4 text-gray-500" />
-          </button>
-          <span>Sales</span>
-        </div>
-
-        {/* Qty */}
-        <div className="col-span-1 flex items-center justify-center space-x-2 text-[14px] text-[#8181A5]">
-          <button
-            className="p-1 rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
-            aria-label="Sort Qty"
-          >
-            <LuArrowUpDown className="w-4 h-4 text-gray-500" />
-          </button>
-          <span>Qty.</span>
-        </div>
-
-        {/* Rating */}
-        <div className="col-span-2 flex items-center justify-center space-x-2 text-[14px] text-[#8181A5]">
-          <button
-            className="p-1 rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
-            aria-label="Sort Rating"
-          >
-            <LuArrowUpDown className="w-4 h-4 text-gray-500" />
-          </button>
-          <span>Rating</span>
-        </div>
-
-        {/* Price */}
-        <div className="col-span-2 flex items-center justify-center space-x-2 text-[14px] text-[#8181A5]">
-          <button
-            className="p-1 rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
-            aria-label="Sort Price"
-          >
-            <LuArrowUpDown className="w-4 h-4 text-gray-500" />
-          </button>
-          <span>Price</span>
-        </div>
-
-        {/* Tag */}
-        <div className="col-span-1 flex items-center justify-center space-x-2 text-[14px] text-[#8181A5]">
-          <button
-            className="p-1 rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
-            aria-label="Sort Tag"
-          >
-            <LuArrowUpDown className="w-4 h-4 text-gray-500" />
-          </button>
-          <span>Tag</span>
-        </div>
-
-        {/* Empty column for "More" */}
-        <div className="col-span-1"></div>
-      </div>
-
-      {/* Rows */}
-      <div className="space-y-4 mb-60">
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="grid grid-cols-12 items-center bg-[#F9FAFB] rounded-2xl px-6 py-4"
-          >
-            {/* Name + Image */}
-            <div className="col-span-4 flex items-center gap-4">
-              <input
-                type="checkbox"
-                checked={selected.includes(product.id)}
-                onChange={() => toggleSelect(product.id)}
-                className="w-4 h-4 accent-blue-600"
-              />
-
-              <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-sm">
-                <Image
-                  src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf"
-                  alt="product"
-                  width={40}
-                  height={40}
-                  className="object-contain"
-                />
-              </div>
-
-              <span className="font-semibold text-[16px] text-[#1C1D21]">
-                {product.name}
-              </span>
-            </div>
-
-            {/* Sales */}
-            <div className="col-span-1 text-center text-sm">
-              <p className="font-semibold text-[16px] text-[#1C1D21]">1,597</p>
-              <span className="text-[#8181A5] text-[14px]">Sales</span>
-            </div>
-
-            {/* Qty */}
-            <div className="col-span-1 text-center text-sm">
-              <p className="font-semibold text-[16px] text-[#1C1D21]">1236</p>
-              <span className="text-[#8181A5] text-[14px]">Qty.</span>
-            </div>
-
-            {/* Rating */}
-            <div className="col-span-2 text-center text-sm">
-              <p className="font-semibold text-[16px] text-[#1C1D21]">4.8 / 5.0</p>
-              <span className="text-[#8181A5] text-[14px]">Rating</span>
-            </div>
-
-            {/* Price */}
-            <div className="col-span-2 text-center text-sm">
-              <p className="font-semibold text-[#1C1D21]">$ 100.6</p>
-              <span className="text-[#8181A5] text-[14px]">Price</span>
-            </div>
-
-            {/* Tag */}
-            <div className="col-span-1 flex justify-center">
-              <span className="bg-[#FFE680] text-[#58585B] text-[14px] font-semibold px-10 py-1.5 rounded-lg">
-                Jacket
-              </span>
-            </div>
-
-            {/* More button */}
-            <div className="col-span-1 flex justify-end">
-              <button
-                className="p-2 rounded-full hover:bg-gray-200 transition-colors text-[#7D7D7D] flex items-center justify-center"
-                aria-label="More options"
-              >
-                <LuList className="w-5 h-5" />
+          {/* Search bar */}
+          <div className="relative w-full max-w-sm">
+            <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search products..."
+              className="search-input w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:border-[#C1121F] transition bg-[#F9FAFB] placeholder:text-gray-300"
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="action-btn absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">
+                <FiX className="w-4 h-4" />
               </button>
-            </div>
+            )}
           </div>
-        ))}
-      </div>
-
-      {/* Pagination */}
-      <div className="flex justify-center items-center mt-12 text-sm">
-        {/* Left: < Prev */}
-        <div className="flex items-center gap-2 mr-12">
-          <button className="px-2 py-1 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200">
-            &lt;
-          </button>
-          <span className="text-gray-500">Prev</span>
         </div>
 
-        {/* Page Numbers */}
-        <div className="flex items-center gap-5">
-          {[1, 2, 3, 4, 5].map((page) => (
-            <span
-              key={page}
-              className={`px-3 py-1 rounded-lg font-bold ${page === 2
-                  ? "bg-red-600 text-white"
-                  : "text-black-500 hover:bg-gray-200"
-                }`}
+        {/* Buttons row */}
+        <div className="flex items-center justify-between mt-5">
+          {/* Deselect all — appears only when items are selected */}
+          <div className="flex items-center gap-2 h-9">
+            {selected.length > 0 && (
+              <button
+                onClick={() => setSelected([])}
+                className="fade-slide-in action-btn flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#C1121F] bg-gray-100 hover:bg-red-50 px-4 py-2 rounded-xl transition uppercase tracking-wide"
+              >
+                <FiX className="w-3.5 h-3.5" />
+                Deselect All ({selected.length})
+              </button>
+            )}
+            {sortKey && (
+              <button
+                onClick={() => { setSortKey(null); setSortDir("asc"); }}
+                className="fade-slide-in action-btn flex items-center gap-2 text-xs font-bold text-[#C1121F] hover:text-red-800 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-xl transition uppercase tracking-wide"
+              >
+                <FiX className="w-3.5 h-3.5" />
+                Clear Sort
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowAdd(true)}
+              className="action-btn flex items-center gap-2 bg-blue-50 text-blue-600 px-5 py-2.5 rounded-xl text-[13px] font-bold hover:bg-blue-100 transition"
             >
-              {page}
-            </span>
+              <FiPlus className="w-4 h-4" /> Add Item
+            </button>
+            <button
+              onClick={handleBulkRemove}
+              disabled={selected.length === 0 || isPending}
+              className="action-btn flex items-center gap-2 bg-[#A52A2A] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold hover:bg-red-900 transition disabled:opacity-40"
+            >
+              <IoMdRemoveCircleOutline className="w-4 h-4" />
+              Remove {selected.length > 0 ? `(${selected.length})` : ""}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Table header ───────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-12 px-6 py-3 mb-1">
+        <div className="col-span-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-8 flex items-center">
+          <SortHeader label="Name" sortKey="name" current={sortKey} dir={sortDir} onSort={handleSort} />
+        </div>
+        <div className="col-span-1 flex justify-center">
+          <SortHeader label="Sales" sortKey={null} current={sortKey} dir={sortDir} onSort={handleSort} disabled />
+        </div>
+        <div className="col-span-1 flex justify-center">
+          <SortHeader label="Qty" sortKey={null} current={sortKey} dir={sortDir} onSort={handleSort} disabled />
+        </div>
+        <div className="col-span-2 flex justify-center">
+          <SortHeader label="Rating" sortKey={null} current={sortKey} dir={sortDir} onSort={handleSort} disabled />
+        </div>
+        <div className="col-span-2 flex justify-center">
+          <SortHeader label="Price" sortKey="price" current={sortKey} dir={sortDir} onSort={handleSort} />
+        </div>
+        <div className="col-span-1 flex justify-center">
+          <SortHeader label="Tag" sortKey="tags" current={sortKey} dir={sortDir} onSort={handleSort} />
+        </div>
+        <div className="col-span-1" />
+      </div>
+
+      {/* ── Rows ───────────────────────────────────────────────────────────── */}
+      {loading ? (
+        <div className="space-y-2.5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} style={{ animationDelay: `${i * 55}ms` }} className="row-in">
+              <SkeletonRow />
+            </div>
           ))}
         </div>
+      ) : sortedProducts.length === 0 ? (
+        <div className="fade-slide-in text-center py-28">
+          <p className="products-title text-3xl text-gray-200 italic mb-2">No products found</p>
+          <p className="text-sm text-gray-400">Try adjusting your search term</p>
+        </div>
+      ) : (
+        <div className="space-y-2 mb-12">
+          {sortedProducts.map((product, i) => (
+            <div
+              key={product.id}
+              style={{ animationDelay: `${i * 35}ms` }}
+              className={`row-in product-row grid grid-cols-12 items-center rounded-2xl px-6 py-4 ${
+                selected.includes(product.id)
+                  ? "bg-red-50 outline outline-1 outline-red-200"
+                  : "bg-[#F9FAFB]"
+              }`}
+            >
+              {/* Name + image */}
+              <div className="col-span-4 flex items-center gap-4">
+                <input
+                  type="checkbox"
+                  checked={selected.includes(product.id)}
+                  onChange={() => toggleSelect(product.id)}
+                  className="w-4 h-4 accent-[#C1121F] cursor-pointer shrink-0"
+                />
+                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm overflow-hidden shrink-0">
+                  <Image
+                    src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf"
+                    alt={product.name} width={40} height={40}
+                    className="object-contain"
+                  />
+                </div>
+                <span className="font-semibold text-[14px] text-[#1C1D21] leading-snug">{product.name}</span>
+              </div>
 
-        {/* Right: Next > */}
-        <div className="flex items-center gap-2 ml-12">
-          <span className="text-gray-500">Next</span>
-          <button className="px-2 py-1 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200">
-            &gt;
+              {/* Sales */}
+              <div className="col-span-1 text-center">
+                <p className="font-bold text-[15px] text-[#1C1D21]">—</p>
+                <span className="text-[10px] font-bold text-[#8181A5] uppercase tracking-wider">Sales</span>
+              </div>
+
+              {/* Qty */}
+              <div className="col-span-1 text-center">
+                <p className="font-bold text-[15px] text-[#1C1D21]">—</p>
+                <span className="text-[10px] font-bold text-[#8181A5] uppercase tracking-wider">Qty.</span>
+              </div>
+
+              {/* Rating */}
+              <div className="col-span-2 text-center">
+                <p className="font-bold text-[15px] text-[#1C1D21]">—</p>
+                <span className="text-[10px] font-bold text-[#8181A5] uppercase tracking-wider">Rating</span>
+              </div>
+
+              {/* Price */}
+              <div className="col-span-2 text-center">
+                <p className="font-bold text-[15px] text-[#C1121F]">
+                  {product.currentPrice != null ? `₱${product.currentPrice.toLocaleString()}` : "—"}
+                </p>
+                <span className="text-[10px] font-bold text-[#8181A5] uppercase tracking-wider">Price</span>
+              </div>
+
+              {/* Tag */}
+              <div className="col-span-1 flex justify-center">
+                {product.tags?.[0] ? (
+                  <span className={`tag-pill text-[11px] font-bold px-3 py-1 rounded-lg ${getTagColor(product.tags[0])}`}>
+                    {product.tags[0]}
+                  </span>
+                ) : (
+                  <span className="text-gray-300 text-sm font-bold">—</span>
+                )}
+              </div>
+
+              {/* Menu */}
+              <div className="col-span-1 flex justify-end">
+                <RowMenu product={product} onEdit={setEditProduct} onDelete={setDeleteProduct} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Pagination ─────────────────────────────────────────────────────── */}
+      {totalPages > 1 && (
+        <div className="fade-slide-in flex justify-center items-center mt-10 gap-2">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="page-btn flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 text-sm font-bold disabled:opacity-30 transition"
+          >
+            ← Prev
+          </button>
+
+          <div className="flex items-center gap-1.5 mx-3">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`page-btn w-9 h-9 rounded-xl text-sm font-bold transition ${
+                  page === currentPage
+                    ? "bg-[#C1121F] text-white shadow-md pulse-glow"
+                    : "text-gray-500 hover:bg-gray-100"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="page-btn flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 text-sm font-bold disabled:opacity-30 transition"
+          >
+            Next →
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
