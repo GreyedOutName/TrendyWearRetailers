@@ -682,6 +682,7 @@ export default function ProductsPage() {
                     src={product.image_url}
                     alt={product.name} width={40} height={40}
                     className="object-contain"
+                    unoptimized
                   />
                 </div>
                 <span className="font-semibold text-[14px] text-[#1C1D21] leading-snug">{product.name}</span>
