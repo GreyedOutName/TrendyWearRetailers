@@ -3,7 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Heart } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { addToWishlist } from "@/app/actions/user/AddToWishlist";
+import { removeFromWishlist } from "@/app/actions/user/RemoveFromWishlist";
 
 type ProductCardProps = {
     id: number;
@@ -13,6 +15,7 @@ type ProductCardProps = {
     price: number;
     rating: number;
     reviews: number;
+    is_liked:boolean;
     colors: string[];
 };
 
@@ -24,12 +27,17 @@ export default function ProductCard({
     price,
     rating,
     reviews,
+    is_liked,
     colors,
 }: ProductCardProps) {
     const [liked, setLiked] = useState(false);
 
     // fallback to placeholder if images array is empty
     const mainImage = images && images.length > 0 ? images[0] : "/placeholder.jpg";
+
+    useEffect(()=>{
+        setLiked(is_liked)
+    },[])
 
     return (
         <div className="group">
@@ -51,6 +59,7 @@ export default function ProductCard({
                     {/* HEART */}
                     <button
                         onClick={(e) => {
+                            liked ? removeFromWishlist(id):addToWishlist(id);
                             e.preventDefault();
                             setLiked(!liked);
                         }}

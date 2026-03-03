@@ -15,19 +15,30 @@ export type Product = {
     colors: string[];
 };
 
+interface Item {
+  id: number
+  name: string
+  image_id: string[]
+}
+
 const BUCKET_NAME = "images";
 
-export async function fetchProducts():Promise<Product[]> {
+export async function fetchFavorites():Promise<Product[]> {
     const supabase = createClient();
     const user_id = (await supabase.auth.getSession()).data.session?.user.id
 
-    const { data: items, error } = await supabase
-        .from("items")
-        .select("id, name, image_id");
+    const { data: raw_items, error } = await supabase
+    .from("wishlist")
+    .select("item:items(id, name, image_id)")
+    .eq("user_id", user_id);
 
-    if (error || !items) {
+    if (error || !raw_items) {
         throw error ?? new Error('No items returned');
     }
+
+    const items: Item[] = raw_items?.flatMap(
+    (w: { item: Item[] }) => w.item
+    ) || []
 
     const itemIds = items.map((i) => i.id);
     const now = new Date().toISOString();
@@ -47,19 +58,6 @@ export async function fetchProducts():Promise<Product[]> {
         }
     }
 
-    const { data: wishlisted } = await supabase
-        .from("wishlist")
-        .select("id, item_id")
-        .eq("user_id", user_id)
-        .in("item_id", itemIds)
-
-    const wishlistSet = new Set<number>();
-    if (wishlisted) {
-        for (const w of wishlisted) {
-            wishlistSet.add(w.item_id);
-        }
-    }
-
     const mapped:Product[] = items.map((item) => {
         const imageUrls = (item.image_id ?? []).map(
             (imgId: string) =>
@@ -72,7 +70,7 @@ export async function fetchProducts():Promise<Product[]> {
             price: priceMap[item.id] ?? 0,
             rating: 0,
             reviews: 0,
-            is_liked: wishlistSet.has(item.id),
+            is_liked: itemIds.includes(item.id),
             colors: [],
         };
     });

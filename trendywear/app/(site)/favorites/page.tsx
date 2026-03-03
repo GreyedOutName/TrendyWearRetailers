@@ -1,33 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState , useEffect} from "react";
 import Link from "next/link";
 import ProductCard from "../components/ProductCard";
 import Breadcrumb from "@/app/(site)/components/Breadcrumb";
+import { fetchFavorites,Product } from "../lib/fetchFavorites";
 
 export default function Favorites() {
-  const [favorites, setFavorites] = useState([
-    {
-      id: 1,
-      name: "Fifa 19",
-      images: ["/images/placeholder.jpg"],
-      price: 44,
-      rating: 4.5,
-      reviews: 120,
-      colors: ["#000000"],
-      inStock: true,
-    },
-    {
-      id: 4,
-      name: "DualShock 4",
-      images: ["/images/placeholder.jpg"],
-      price: 59.99,
-      rating: 4.8,
-      reviews: 320,
-      colors: ["#000000", "#ffffff"],
-      inStock: false,
-    },
-  ]);
+  const [favorites, setFavorites] = useState<Product[]>([]);
+  const [loading,setLoading] = useState(true)
+
+  useEffect(()=>{
+    fetchFavorites()
+      .then(setFavorites)
+      .catch((err) => console.error("Error fetching products:", err))
+      .finally(() => setLoading(false));
+  },[])
 
   return (
     <div className="min-h-screen bg-[#F8F9FB] flex flex-col items-center">
@@ -57,23 +45,31 @@ export default function Favorites() {
 
         <section className="flex-grow">
           <div className="max-w-[1044px]"> 
-            {favorites.length > 0 ? (
+            {!loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-10 lg:pb-4">
-                {favorites.map((product) => (
-                  <ProductCard key={product.id} {...product} />
-                ))}
+                {favorites.length === 0 ? (
+                  <div className="py-40 text-center w-full">
+                    <div className="font-black text-gray-200 text-4xl uppercase tracking-[0.5em] mb-8">
+                      Empty List
+                    </div>
+                    <Link
+                      href="/"
+                      className="inline-block border-b-2 border-black pb-1 font-black uppercase text-sm tracking-widest hover:text-gray-400"
+                    >
+                      Start Exploring
+                    </Link>
+                  </div>
+                ) : (
+                  favorites.map((favorites) => (
+                    <ProductCard key={favorites.id} {...favorites} />
+                  ))
+                )}
               </div>
             ) : (
               <div className="py-40 text-center w-full">
                 <div className="font-black text-gray-200 text-4xl uppercase tracking-[0.5em] mb-8">
-                  Empty List
+                  Loading Favorites
                 </div>
-                <Link
-                  href="/"
-                  className="inline-block border-b-2 border-black pb-1 font-black uppercase text-sm tracking-widest hover:text-gray-400"
-                >
-                  Start Exploring
-                </Link>
               </div>
             )}
           </div>
