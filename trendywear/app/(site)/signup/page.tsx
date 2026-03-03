@@ -34,7 +34,7 @@ export default function SignUpPage() {
     setLoading(true);
     const supabase = createClient();
 
-    const { data,error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -46,7 +46,29 @@ export default function SignUpPage() {
     });
 
     if (error) {
-      setError(error.message);
+      const msg = (error.message || "").toLowerCase();
+      if (
+        msg.includes("user already registered") ||
+        msg.includes("already registered") ||
+        msg.includes("already exists") ||
+        msg.includes("email already") ||
+        msg.includes("duplicate")
+      ) {
+        setError("The email is already used");
+      } else {
+        setError(error.message);
+      }
+      setLoading(false);
+      return;
+    }
+
+    // ✅ THIS is the important part (Supabase may not throw an error)
+    if (
+      data?.user &&
+      Array.isArray(data.user.identities) &&
+      data.user.identities.length === 0
+    ) {
+      setError("The email is already used");
       setLoading(false);
       return;
     }
