@@ -32,6 +32,7 @@ function AdminContent({ children }: { children: React.ReactNode }) {
     { name: "Inventory", icon: FiLayers, href: "/admin/inventory" },
     { name: "Orders", icon: FiShoppingBag, href: "/admin/orders" },
     
+    
     { name: "Users", icon: FiUsers, href: "/admin/users" },
   ];
 
