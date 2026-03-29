@@ -16,6 +16,7 @@ import { fetchShoppingCart } from '../lib/fetchShoppingCart';
 import { useCart, CartItem } from '../context/CartContext';
 import { addToCart } from '@/app/actions/user/AddToCart';
 import { removeFromCart } from '@/app/actions/user/RemoveFromCart';
+import { createCheckout } from '@/app/actions/payrex/createCheckout';
 
 export default function ShoppingCart() {
   const CURRENCY = "PHP";
@@ -71,6 +72,24 @@ export default function ShoppingCart() {
   const removeItem = (id: number) => {
     setCartItems(prev => prev.filter(item => item.id !== id));
   };
+
+  const proceedToCheckout = async () =>{
+    const checkoutUrl = await createCheckout(
+      cartItems.map(item=>{
+        return {
+          name: item.name,
+          amount: item.price * 100, // Convert to cents
+          quantity: item.quantity,
+          //image: item.image + "?format=jpg"
+        };
+      })
+    )
+    console.log("Checkout URL:", checkoutUrl);  
+
+    if(checkoutUrl){
+      window.location.href = checkoutUrl; 
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FB] flex flex-col items-center">
@@ -235,6 +254,7 @@ export default function ShoppingCart() {
               </div>
 
               <button 
+                onClick={()=>{proceedToCheckout()}}
                 disabled={cartItems.length === 0}
                 className="w-full mt-6 bg-[#003049] text-white py-4 rounded-full font-bold text-lg hover:bg-[#00263d] transition-all active:scale-[0.98] disabled:bg-gray-400"
               >
