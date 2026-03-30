@@ -20,7 +20,8 @@ const BUCKET_NAME = "images";
 
 export async function fetchShoppingCart(): Promise<ShoppingCartItem[]> {
   const supabase = createClient();
-  const user_id = (await supabase.auth.getSession()).data.session?.user.id;
+  const { data: { user } } = await supabase.auth.getUser();
+const user_id = user?.id;
 
   const { data: cartForUser, error: cartError } = await supabase
     .from('carts')
@@ -29,8 +30,9 @@ export async function fetchShoppingCart(): Promise<ShoppingCartItem[]> {
     .eq('status', 'active')
     .maybeSingle();
 
+  // ✅ No cart yet — just return empty instead of throwing
   if (cartError || !cartForUser) {
-    throw cartError ?? new Error('No active cart found');
+    return [];
   }
 
   const { data: cart_items, error } = await supabase
@@ -97,7 +99,7 @@ export async function fetchShoppingCart(): Promise<ShoppingCartItem[]> {
       quantity: ci.quantity,
       size: 'N/A',
       color: 'N/A',
-      image: imageUrls.length > 0 ? imageUrls[0]: "/images/placeholder.jpg",
+      image: imageUrls.length > 0 ? imageUrls[0] : "/images/placeholder.jpg",
       isFavorite: wishlistSet.has(ci.item.id),
       isEditing: false
     };

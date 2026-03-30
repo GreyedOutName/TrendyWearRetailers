@@ -75,7 +75,8 @@ export default function WomensWearScroll() {
 
       setWomensWearData(mapped);
 
-      const user = (await supabase.auth.getSession()).data.session?.user.id
+      const { data: { user } } = await supabase.auth.getUser();
+      const user_id = user?.id;
       if (user) {
         try {
           const favorites = await fetchFavorites();

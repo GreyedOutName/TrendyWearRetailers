@@ -91,7 +91,8 @@ export default function Navbar() {
     };
 
     const checkIfAdmin = async() => {
-      const user_id = (await supabase.auth.getSession()).data.session?.user.id
+      const { data: { user } } = await supabase.auth.getUser();
+      const user_id = user?.id;
 
       const { data: dbUser, error: dbError } = await supabase
         .from('users')
