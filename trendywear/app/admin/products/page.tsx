@@ -357,8 +357,91 @@ function DeleteConfirmModal({ product, onClose, onSuccess }: { product: Product;
   );
 }
 
+// ─── Special Price Modal ─────────────────────────────────────────────────────────────
+function SpecialPriceModal({ product, onClose, onSuccess }: { product: Product; onClose: () => void; onSuccess: () => void }) {
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({ 
+    specialPrice: "",
+    validTo: "",
+  });
+
+  const basePrice = product.currentPrice ?? 0;
+  const specialPrice = form.specialPrice ? parseFloat(form.specialPrice) : null;
+  const discount = basePrice && specialPrice ? basePrice - specialPrice : 0;
+  const discountPercent = basePrice && basePrice > 0 ? ((discount / basePrice) * 100).toFixed(1) : 0;
+  const isInvalid = specialPrice !== null && specialPrice > basePrice;
+
+  const handleSubmit = () => {
+    setError("");
+    if (!form.specialPrice || !form.validTo) { setError("Special price and valid date are required."); return; }
+    if (isInvalid) { setError("Special price cannot be higher than base price."); return; }
+    startTransition(async () => {
+      try {
+        await addSpecialPrice({ 
+          itemId: product.id, 
+          specialPrice: parseFloat(form.specialPrice),
+          validTo: form.validTo,
+        });
+        onSuccess(); onClose();
+      } catch (e: any) { setError(e.message); }
+    });
+  };
+
+  return (
+    <ModalWrapper onClose={onClose} title="Add Special Price">
+      <div className="space-y-4">
+        <div>
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Product</label>
+          <p className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 bg-gray-50">{product.name}</p>
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Base Price (₱)</label>
+          <p className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 bg-gray-50 font-semibold">₱{basePrice.toLocaleString()}</p>
+        </div>
+        
+        {/* Special Price & Date */}
+        <div className="space-y-4">
+          <Field 
+            label="Special Price (₱)" 
+            value={form.specialPrice} 
+            onChange={v => setForm({ ...form, specialPrice: v })} 
+            placeholder="e.g. 799" 
+            type="number" 
+          />
+          <Field 
+            label="Valid Until" 
+            value={form.validTo} 
+            onChange={v => setForm({ ...form, validTo: v })} 
+            type="date" 
+          />
+
+          {form.specialPrice && (
+            <div className={`${isInvalid ? "bg-red-50 border-red-100" : "bg-blue-50 border-blue-100"} border rounded-lg px-3 py-2.5 mt-3`}>
+              <p className={`text-xs ${isInvalid ? "text-red-500" : "text-gray-500"} uppercase tracking-widest font-bold`}>
+                {isInvalid ? "Invalid Price" : "Discount"}
+              </p>
+              <p className={`text-lg font-bold ${isInvalid ? "text-red-600" : "text-blue-600"}`}>
+                {isInvalid ? "Price must be lower than base price" : `₱${discount.toLocaleString()} (${discountPercent}%)`}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {error && <p className="text-red-500 text-xs font-semibold bg-red-50 px-3 py-2 rounded-lg border border-red-100">{error}</p>}
+        <div className="flex justify-end gap-2 pt-2">
+          <button onClick={onClose} className="action-btn px-5 py-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 text-sm font-medium">Cancel</button>
+          <button onClick={handleSubmit} disabled={isPending || isInvalid} className="action-btn px-5 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60">
+            {isPending ? "Adding..." : "Add Special Price"}
+          </button>
+        </div>
+      </div>
+    </ModalWrapper>
+  );
+}
+
 //  Row Menu ─────────────────────────────────────────────────────────────────
-function RowMenu({ product, onEdit, onDelete }: { product: Product; onEdit: (p: Product) => void; onDelete: (p: Product) => void }) {
+function RowMenu({ product, onEdit, onDelete, onAddSpecialPrice }: { product: Product; onEdit: (p: Product) => void; onDelete: (p: Product) => void; onAddSpecialPrice: (p: Product) => void }) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -390,6 +473,13 @@ function RowMenu({ product, onEdit, onDelete }: { product: Product; onEdit: (p: 
       style={{ position: "absolute", top: coords.top, left: coords.left, zIndex: 99999, width: 160 }}
       className="bg-[#1C1D21] rounded-xl shadow-2xl py-1"
     >
+      <button
+        onClick={() => { setOpen(false); onAddSpecialPrice(product); }}
+        className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-blue-400 hover:bg-white/10 hover:text-blue-300 transition"
+      >
+        <FiEdit2 className="w-3.5 h-3.5" /> Add Special Price
+      </button>
+      <div className="h-px bg-white/10 mx-3" />
       <button
         onClick={() => { setOpen(false); onEdit(product); }}
         className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white transition"
@@ -455,6 +545,7 @@ export default function ProductsPage() {
   const [showAdd, setShowAdd]             = useState(false);
   const [editProduct, setEditProduct]     = useState<Product | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [specialPriceProduct, setSpecialPriceProduct] = useState<Product | null>(null);
   const [isPending, startTransition]      = useTransition();
 
   //  Fetch ──────────────────────────────────────────────────────────────────
@@ -543,6 +634,7 @@ export default function ProductsPage() {
       {showAdd      && <AddItemModal     onClose={() => setShowAdd(false)}       onSuccess={() => fetchProducts(currentPage, search)} />}
       {editProduct  && <EditItemModal    product={editProduct}  onClose={() => setEditProduct(null)}   onSuccess={() => fetchProducts(currentPage, search)} />}
       {deleteProduct && <DeleteConfirmModal product={deleteProduct} onClose={() => setDeleteProduct(null)} onSuccess={() => fetchProducts(currentPage, search)} />}
+      {specialPriceProduct && <SpecialPriceModal product={specialPriceProduct} onClose={() => setSpecialPriceProduct(null)} onSuccess={() => fetchProducts(currentPage, search)} />}
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="fade-slide-in mb-8">
@@ -727,7 +819,7 @@ export default function ProductsPage() {
 
               {/* Menu */}
               <div className="col-span-1 flex justify-end">
-                <RowMenu product={product} onEdit={setEditProduct} onDelete={setDeleteProduct} />
+                <RowMenu product={product} onEdit={setEditProduct} onDelete={setDeleteProduct} onAddSpecialPrice={setSpecialPriceProduct} />
               </div>
             </div>
           ))}
