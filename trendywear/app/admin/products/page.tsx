@@ -207,6 +207,9 @@ const MAX_PRODUCT_IMAGES = 8;
 
 type ProductImageEntry = { id: string; file: File; preview: string };
 
+const AVAILABLE_SIZES = ["XS", "S", "M", "L", "XL"];
+const AVAILABLE_COLORS = ["Red", "Blue", "White", "Beige", "Black", "Yellow", "Green"];
+
 //  Add Modal ────────────────────────────────────────────────────────────────
 function AddItemModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [isPending, startTransition] = useTransition();
@@ -218,6 +221,8 @@ function AddItemModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
     description: "",
     tags: "",
     basePrice: "",
+    sizes: [] as string[],  
+    colors: [] as string[],
   });
   const imagesRef = useRef(images);
   imagesRef.current = images;
@@ -283,6 +288,8 @@ function AddItemModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
           tags: JSON.stringify(tagsArray),
           image_paths,
           basePrice: parseFloat(form.basePrice),
+          sizes: JSON.stringify(form.sizes),  
+          colors: JSON.stringify(form.colors), 
         });
         onSuccess();
         onClose();
@@ -330,6 +337,17 @@ function AddItemModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
     setCropIndex(null);
   };
 
+  const toggleSelection = (field: "sizes" | "colors", value: string) => {
+    setForm((prev) => {
+      const currentList = prev[field];
+      if (currentList.includes(value)) {
+        return { ...prev, [field]: currentList.filter((item) => item !== value) };
+      } else {
+        return { ...prev, [field]: [...currentList, value] };
+      }
+    });
+  };
+
   return (
     <>
       {cropIndex !== null && images[cropIndex] && (
@@ -361,6 +379,59 @@ function AddItemModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
             onChange={(v) => setForm({ ...form, tags: v })}
             placeholder="e.g. Women, Tops"
           />
+          {/* <-- SIZES CHECKBOXES --> */}
+          <div>
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+              Available Sizes
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {AVAILABLE_SIZES.map((size) => (
+                <label
+                  key={size}
+                  className={`flex items-center gap-2 cursor-pointer border px-3 py-1.5 rounded-lg transition ${
+                    form.sizes.includes(size)
+                      ? "bg-red-50 border-[#C1121F]/30"
+                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.sizes.includes(size)}
+                    onChange={() => toggleSelection("sizes", size)}
+                    className="accent-[#C1121F] w-3.5 h-3.5 cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-gray-700">{size}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* <-- COLORS CHECKBOXES --> */}
+          <div>
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+              Available Colors
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {AVAILABLE_COLORS.map((color) => (
+                <label
+                  key={color}
+                  className={`flex items-center gap-2 cursor-pointer border px-3 py-1.5 rounded-lg transition ${
+                    form.colors.includes(color)
+                      ? "bg-red-50 border-[#C1121F]/30"
+                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.colors.includes(color)}
+                    onChange={() => toggleSelection("colors", color)}
+                    className="accent-[#C1121F] w-3.5 h-3.5 cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-gray-700">{color}</span>
+                </label>
+              ))}
+            </div>
+          </div>
 
           <div>
             <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
