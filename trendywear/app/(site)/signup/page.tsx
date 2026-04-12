@@ -2,7 +2,7 @@
 
 import { FormEvent, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { MdArrowBack } from "react-icons/md";
+import { MdArrowBack, MdClose } from "react-icons/md";
 import { createClient } from "@/utils/supabase/client";
 import { evaluatePassword } from "@/lib/passwordStrength";
 
@@ -16,6 +16,7 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [showTerms, setShowTerms] = useState(false);
 
   const passwordCheck = useMemo(() => evaluatePassword(password), [password]);
 
@@ -262,16 +263,17 @@ export default function SignUpPage() {
               type="checkbox"
               checked={termsAccepted}
               onChange={(e) => setTermsAccepted(e.target.checked)}
-              className="h-4 w-4 text-[#c1121f] border-gray-300 rounded focus:ring-[#c1121f] bg-transparent"
+              className="h-4 w-4 text-[#c1121f] border-gray-300 rounded focus:ring-[#c1121f] bg-transparent mt-0.5"
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-gray-500">
               I agree to the{" "}
-              <a
-                href="#"
-                className="text-[#c1121f] hover:text-[#a1121f] transition-colors"
+              <button
+                type="button"
+                onClick={() => setShowTerms(true)}
+                className="text-[#c1121f] hover:text-[#a1121f] transition-colors font-semibold"
               >
                 Terms & Conditions
-              </a>
+              </button>
             </label>
           </div>
 
@@ -300,6 +302,63 @@ export default function SignUpPage() {
           </p>
         </div>
       </div>
+
+                {/* --- TERMS & CONDITIONS MODAL --- */}
+      {showTerms && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl relative">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900">Terms and Conditions</h3>
+              <button
+                onClick={() => setShowTerms(false)}
+                className="text-gray-400 hover:text-gray-700 transition-colors"
+                aria-label="Close modal"
+              >
+                <MdClose className="text-2xl" />
+              </button>
+            </div>
+
+            {/* Modal Body (Scrollable) */}
+            <div className="px-6 py-4 overflow-y-auto flex-1 text-sm text-gray-600 space-y-4">
+              <p><strong>Last Updated: April 12, 2026</strong></p>
+              
+              <h4 className="text-base font-semibold text-gray-800 mt-4">1. Introduction</h4>
+              <p>Welcome to Trendy Wear. By signing up for an account, you agree to comply with and be bound by the following terms and conditions of use. Please read these terms carefully before proceeding.</p>
+              
+              <h4 className="text-base font-semibold text-gray-800 mt-4">2. User Accounts</h4>
+              <p>When you create an account with us, you must provide accurate, complete, and current information at all times. Failure to do so constitutes a breach of the Terms, which may result in immediate termination of your account on our Service.</p>
+              <p>You are responsible for safeguarding the password that you use to access the Service and for any activities or actions under your password.</p>
+
+              <h4 className="text-base font-semibold text-gray-800 mt-4">3. Purchases and Payment</h4>
+              <p>We reserve the right to refuse or cancel your order at any time for certain reasons including but not limited to: product or service availability, errors in the description or price of the product or service, error in your order, or other reasons. We reserve the right to refuse or cancel your order if fraud or an unauthorized or illegal transaction is suspected.</p>
+
+              <h4 className="text-base font-semibold text-gray-800 mt-4">4. Intellectual Property</h4>
+              <p>The Service and its original content, features, and functionality are and will remain the exclusive property of Trendy Wear and its licensors. The Service is protected by copyright, trademark, and other laws of both the Philippines and foreign countries.</p>
+
+              <h4 className="text-base font-semibold text-gray-800 mt-4">5. Limitation of Liability</h4>
+              <p>In no event shall Trendy Wear, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.</p>
+
+              <h4 className="text-base font-semibold text-gray-800 mt-4">6. Changes</h4>
+              <p>We reserve the right, at our sole discretion, to modify or replace these Terms at any time. By continuing to access or use our Service after those revisions become effective, you agree to be bound by the revised terms.</p>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={() => {
+                  setTermsAccepted(true);
+                  setShowTerms(false);
+                }}
+                className="bg-[#c1121f] text-white px-6 py-2 rounded font-semibold hover:bg-[#a91c1c] transition-colors"
+              >
+                I Agree & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

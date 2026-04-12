@@ -42,7 +42,7 @@ export default function Footer() {
         {/* Left Section: Brand Info */}
         <div className="flex flex-col justify-center md:w-1/4 md:px-4">
           <h2 className="text-3xl font-bold text-[#F59E0B] tracking-wide uppercase">
-            Beyond
+            Trendy Wear
           </h2>
           <div className="pb-1 border-b border-white/30">
             <p className="text-sm font-medium tracking-wide">
@@ -50,7 +50,7 @@ export default function Footer() {
             </p>
           </div>
           <p className="pt-4 text-xs text-red-100">
-            © 2026 Beyond. All rights reserved.
+            © 2026 Trendy Wear. All rights reserved.
           </p>
         </div>
 

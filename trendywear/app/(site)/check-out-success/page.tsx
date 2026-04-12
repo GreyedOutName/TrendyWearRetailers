@@ -28,6 +28,7 @@ const CheckoutSuccess = ({
           </p>
 
           {/* Order Details Summary */}
+          {/*
           <div className="mt-8 bg-gray-50 rounded-lg p-4 text-left">
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between border-b border-gray-200 pb-3">
@@ -42,6 +43,7 @@ const CheckoutSuccess = ({
               </div>
             </dl>
           </div>
+          */}
 
           {/* Actions */}
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4">
@@ -55,7 +57,7 @@ const CheckoutSuccess = ({
             
             <button
               type="button"
-              onClick={() => router.push("/products")}
+              onClick={() => router.push("/products-page")}
               className="flex-1 flex justify-center items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors"
             >
               <ShoppingBag className="w-4 h-4 mr-2" />
