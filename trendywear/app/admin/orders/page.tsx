@@ -91,14 +91,28 @@ export default function ProductsPage() {
     );
   };
 
+  //  Tag color map ────────────────────────────────────────────────────────────
+  const TAG_COLORS: Record<string, string> = {
+    Women:       "bg-pink-100 text-pink-700",
+    Men:         "bg-blue-100 text-blue-700",
+    Tops:        "bg-amber-100 text-amber-700",
+    Dress:       "bg-purple-100 text-purple-700",
+    Bottoms:     "bg-emerald-100 text-emerald-700",
+    Accessories: "bg-orange-100 text-orange-700",
+    Shirt:       "bg-sky-100 text-sky-700",
+    Jacket:      "bg-yellow-100 text-yellow-800",
+    Trouser:     "bg-indigo-100 text-indigo-700",
+    Short:       "bg-teal-100 text-teal-700",
+    Polo:        "bg-cyan-100 text-cyan-700",
+  };
+  const getTagColor = (tag: string) => TAG_COLORS[tag] ?? "bg-gray-100 text-gray-600";
+
   return (
     <div className="w-full">
       {/* Header */}
       <div className="mb-12">
         {/* Title */}
-        <h1 className="text-[48px] font-bold text-[#C1121F] tracking-tight">
-          Orders
-        </h1>
+        <h1 className="text-3xl text-[#C1121F] tracking-tight font-bold">Orders</h1>
       </div>
 
       {/* Table Header */}
@@ -202,15 +216,15 @@ export default function ProductsPage() {
               </div>
 
               {/* Order ID */}
-              <div className="col-span-1 text-center text-sm">
-                <p className="font-semibold text-[16px] text-[#1C1D21]">#{product.order_id}</p>
-                <span className="text-[#8181A5] text-[14px]">Order</span>
+              <div className="col-span-1 text-center">
+                <p className="font-bold text-[15px] text-[#1C1D21]">#{product.order_id}</p>
+                <span className="text-[10px] font-bold text-[#8181A5] uppercase tracking-wider">Order</span>
               </div>
 
               {/* Qty */}
-              <div className="col-span-1 text-center text-sm">
-                <p className="font-semibold text-[16px] text-[#1C1D21]">{product.quantity}</p>
-                <span className="text-[#8181A5] text-[14px]">Qty.</span>
+              <div className="col-span-1 text-center">
+                <p className="font-bold text-[15px] text-[#1C1D21]">{product.quantity}</p>
+                <span className="text-[10px] font-bold text-[#8181A5] uppercase tracking-wider">Qty.</span>
               </div>
 
               {/* Rating */}
@@ -220,14 +234,14 @@ export default function ProductsPage() {
               </div>
 
               {/* Price */}
-              <div className="col-span-2 text-center text-sm">
-                <p className="font-semibold text-[#1C1D21]">₱{product.price.toLocaleString()}</p>
-                <span className="text-[#8181A5] text-[14px]">Price</span>
+              <div className="col-span-2 text-center">
+                <p className="font-bold text-[15px] text-[#1C1D21]">₱{product.price.toLocaleString()}</p>
+                <span className="text-[10px] font-bold text-[#8181A5] uppercase tracking-wider">Price</span>
               </div>
 
               {/* Tag */}
               <div className="col-span-1 flex justify-center">
-                <span className="bg-[#FFE680] text-[#58585B] text-[14px] font-semibold px-10 py-1.5 rounded-lg">
+                <span className={`${getTagColor(product.tags[0] || "")} text-[14px] font-semibold px-4 py-1.5 rounded-lg`}>
                   {product.tags[0] ?? "—"}
                 </span>
               </div>
