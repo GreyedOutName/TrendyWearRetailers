@@ -2,11 +2,12 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { createClient } from '@/utils/supabase/server'  // ✅ Use server, not client
 
 type ResponseData = { message: string }
-/*
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseData>) {
     const supabase = await createClient();
     const body = req.body;
-
+    return res.status(200).json({ message: `Received data: ${JSON.stringify(body)}` });
+    /*
     if (req.method === 'POST') {
         //Get User ID from Supabase Auth
         const { data: { user }, error } = await supabase.auth.getUser();
@@ -64,5 +65,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         res.status(200).json({ message: `Supabase Updated, User: ${user.email}` })
     } else {
         res.status(200).json({ message: 'Hello from the TrendyWear Team!' })
-    }
-}*/
+    }*/
+}
