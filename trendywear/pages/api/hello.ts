@@ -20,33 +20,9 @@ export default async function handler(
 
     const body = req.body;
 
-    // Check if message exists
-    if (!body.message || typeof body.message !== "string") {
-      return res.status(400).json({ message: "Invalid or missing 'message' field" });
-    }
-
-    const raw = body.message;
-
-    // Check prefix safely
-    if (!raw.startsWith("Received data: ")) {
-      return res.status(400).json({ message: "Unexpected message format" });
-    }
-
-    const jsonString = raw.replace("Received data: ", "");
-
-    let data;
-
-    // Safe JSON parsing
-    try {
-      data = JSON.parse(jsonString);
-    } catch (err) {
-      return res.status(400).json({ message: "Invalid JSON format" });
-    }
-
     // Safe extraction using optional chaining
-    const amount = data?.data?.amount ?? "No amount found";
-    const userId =
-      data?.data?.metadata?.user_id ?? "No User ID in metadata";
+    const amount = body.data?.amount ?? "No amount found";
+    const userId = body.data?.metadata?.user_id ?? "No User ID in metadata";
 
     return res.status(200).json({
       message: `Received data: [Amount: ${amount}, User ID: ${userId}]`
@@ -56,7 +32,7 @@ export default async function handler(
     console.error("Handler error:", error);
 
     return res.status(500).json({
-      message: "Internal server error"
+      message: `Internal server error: ${error}`
     });
   }
 }
