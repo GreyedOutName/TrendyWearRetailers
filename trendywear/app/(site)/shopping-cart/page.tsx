@@ -12,17 +12,23 @@ import {
   MdCheck
 } from 'react-icons/md';
 import Breadcrumb from "@/app/(site)/components/Breadcrumb";
+import TopModal from "../components/TopModal";
 import { fetchShoppingCart } from '../lib/fetchShoppingCart';
 import { useCart, CartItem } from '../context/CartContext';
 import { addToCart } from '@/app/actions/user/AddToCart';
 import { removeFromCart } from '@/app/actions/user/RemoveFromCart';
 import { createCheckout } from '@/app/actions/payrex/createCheckout';
+import { availVoucher } from '@/app/actions/user/AvailVoucher';
 
 export default function ShoppingCart() {
   const CURRENCY = "PHP";
   const SHIPPING_FEE_VALUE: number = 0; 
-  const DISCOUNT_VALUE = 0;
-  const ESTIMATED_DELIVERY = "April 07, 2026";
+  //const DISCOUNT_VALUE = 0;
+  const ESTIMATED_DELIVERY = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
   const ASPECT_RATIO = "aspect-[6/7]";
 
   // Options for the "Edit" functionality
@@ -36,6 +42,14 @@ export default function ShoppingCart() {
       .then(setCartItems)
       .catch(err => console.error(err));
 }, []);
+
+  // --- LOCAL UI STATES & VOUCHER DISCOUNT ---
+  const [modalType, setModalType] = useState<"success" | "error">("success");
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherDiscount, setVoucherDiscount] = useState(1);
+  const [DISCOUNT_VALUE, setDISCOUNT_VALUE] = useState(0);
 
   // --- DERIVED CALCULATIONS ---
   const subtotal = useMemo(() =>    
@@ -73,12 +87,32 @@ export default function ShoppingCart() {
     setCartItems(prev => prev.filter(item => item.id !== id));
   };
 
+  const applyVoucher = async () => {
+    const result = await availVoucher(voucherCode, subtotal);
+    if (result?.success) {
+      setModalType("success");
+      setVoucherDiscount(result.discount);
+      modifyDiscountAmount();
+      setModalMessage(result.message);
+      setShowModal(true);
+    } else {
+      setModalType("error");
+      setModalMessage(result?.message ?? "Failed to apply voucher");
+      setShowModal(true);
+    }
+  };
+
+  const modifyDiscountAmount = () => {
+    const discountAmount = subtotal * voucherDiscount;
+    setDISCOUNT_VALUE(discountAmount);
+  }
+
   const proceedToCheckout = async () =>{
     const checkoutUrl = await createCheckout(
       cartItems.map(item=>{
         return {
           name: item.name,
-          amount: item.price * 100, // Convert to cents
+          amount: Math.round(item.price * 100 * (1-voucherDiscount)), // Convert to cents
           quantity: item.quantity,
           description: `Size: ${item.size}, Color: ${item.color}`
           //image: item.image + "?format=jpg"
@@ -98,6 +132,9 @@ export default function ShoppingCart() {
         
         {/* HEADER SECTION */}
         <div className="mb-6">
+          {showModal && (
+            <TopModal message={modalMessage} type={modalType} onClose={() => setShowModal(false)} />
+          )}
           <Breadcrumb
             items={[
               { label: "Home", href: "/" },
@@ -272,10 +309,14 @@ export default function ShoppingCart() {
               <div className="flex bg-white rounded-[10px] p-2 border border-gray-100">
                 <input 
                   type="text" 
-                  placeholder="Coupon Code" 
+                  placeholder="Voucher Code" 
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value)}
                   className="bg-transparent flex-grow px-5 outline-none text-[#003049] font-bold placeholder:text-gray-300"
                 />
-                <button className="text-[#C1121F] font-bold px-6 py-2 hover:bg-gray-50 rounded-[10px] transition-all">
+                <button className="text-[#C1121F] font-bold px-6 py-2 hover:bg-gray-50 rounded-[10px] transition-all"
+                  onClick={applyVoucher}
+                >
                   Apply
                 </button>
               </div>
