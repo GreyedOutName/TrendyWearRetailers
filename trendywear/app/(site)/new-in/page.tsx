@@ -45,7 +45,8 @@ export default function Page() {
   useEffect(() => {
     setLoading(true);
     setActivePage(1);
-    fetchProducts(searchQuery, activeCategory || null, sortBy)
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    fetchProducts(searchQuery, activeCategory || null, sortBy, cutoff)
       .then(setAllProducts)
       .catch(console.error)
       .finally(() => setLoading(false));

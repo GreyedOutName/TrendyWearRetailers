@@ -56,7 +56,7 @@ function SalesPageContent() {
 
   useEffect(() => {
     setLoading(true);
-    fetchProducts(searchQuery, activeCategory)
+    fetchProducts(searchQuery, activeCategory ?? null, null, null, true)
       .then(setProducts)
       .catch(console.error)
       .finally(() => setLoading(false));

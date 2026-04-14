@@ -22,7 +22,9 @@ export type SortOption = "name" | "price_asc" | "rating" | null;
 export async function fetchProducts(
     search?: string | null,
     tags?: string | null,
-    sortBy?: SortOption
+    sortBy?: SortOption,
+    createdAfter?: string | Date | null,
+    onSaleOnly: boolean = false
 ): Promise<Product[]> {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -30,7 +32,7 @@ export async function fetchProducts(
 
     let query = supabase
         .from("items")
-        .select("id, name, image_id, tags")
+        .select("id, name, image_id, tags, created_at")
         .eq("is_active", true);
 
     if (search && search.trim() !== "") {
@@ -41,10 +43,19 @@ export async function fetchProducts(
         query = query.contains("tags", [tags]);
     }
 
+    if (createdAfter) {
+        const cutoffIso =
+            typeof createdAfter === "string"
+                ? createdAfter
+                : createdAfter.toISOString();
+        query = query.gte("created_at", cutoffIso);
+    }
+
     const { data: items, error } = await query;
     if (error || !items) throw error ?? new Error("No items returned");
 
     const itemIds = items.map((i) => i.id);
+    if (itemIds.length === 0) return [];
     const now = new Date().toISOString();
 
     // ✅ Fetch ALL prices per item (to get current + old price)
@@ -129,7 +140,9 @@ export async function fetchProducts(
     else if (sortBy === "rating") mapped.sort((a, b) => b.rating - a.rating);
     else if (sortBy === "name") mapped.sort((a, b) => a.name.localeCompare(b.name));
 
-    return mapped;
+    const saleFiltered = onSaleOnly ? mapped.filter((p) => !!p.oldPrice && p.oldPrice > p.price) : mapped;
+
+    return saleFiltered;
 }
 
 // ✅ Helper: extract unique subcategories from fetched products given a main category
