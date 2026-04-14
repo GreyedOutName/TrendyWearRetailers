@@ -124,5 +124,5 @@ export async function fetchOrders(){
     };
     }) ?? [];
 
-    return mapped
+    return mapped;
 }
