@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+
 import { 
   MdLocalShipping, 
   MdCheckCircle, 
@@ -94,6 +95,20 @@ export default function OrderHistory() {
           ) : (
             orders.map((order) => (
             <div key={order.id} className="bg-white rounded-[10px] overflow-hidden shadow-sm border border-gray-300">
+
+              {/* Status Badge */}
+<div className={`inline-flex items-center gap-2 px-3 sm:px-5 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-black uppercase tracking-widest ${getStatusColor(order.status)} border border-current/10`}>
+  {order.status === 'Delivered' ? <MdCheckCircle size={16} /> : <MdLocalShipping size={16} />}
+  {order.status}
+</div>
+
+{/* 👇 Add this */}
+<Link
+  href={`/track?orderId=${order.id}`}
+  className="inline-flex items-center gap-1 text-sm font-semibold text-[#003049] hover:text-[#C1121F] transition"
+>
+  Track Order <MdChevronRight size={18} />
+</Link>
               
               {/* Order Top Bar */}
               <div className="bg-[#E5E4E4]/60 px-4 sm:px-8 py-4 sm:py-6 flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-gray-300">
