@@ -169,7 +169,7 @@ export default function Navbar() {
         fixed top-0 left-0 w-full bg-white shadow-2xl z-[100] transition-all duration-300 ease-in-out
         ${isSearchOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}
       `}>
-        <div className="max-w-7xl mx-auto px-6 py-8 flex items-center gap-6">
+        <div className="max-w-[1600px] mx-auto px-10 py-8 flex items-center gap-6">
           <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center border-b-2 border-[#003049] py-2">
             <MdOutlineSearch size={30} className="text-[#003049] mr-4" />
             <input
@@ -193,7 +193,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 flex items-center">
+      <div className="max-w-[1600px] mx-auto px-10 py-6 flex items-center">
 
         {/* Left Links */}
         <div className="hidden lg:flex flex-1 justify-evenly text-[#003049] font-medium text-lg">

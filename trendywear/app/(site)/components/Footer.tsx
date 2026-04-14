@@ -37,7 +37,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-[#c1121f] text-white py-16 border-t border-red-800">
-      <div className="max-w-7xl mx-auto px-8 md:px-4 flex flex-col md:flex-row justify-between gap-8">
+      <div className="max-w-[1600px] mx-auto px-10 md:pl-[6.25rem] flex flex-col items-center text-center md:flex-row  md:text-left md:justify-between gap-8">
 
         {/* Left Section: Brand Info */}
         <div className="flex flex-col justify-center md:w-1/4 md:px-4">
@@ -45,17 +45,17 @@ export default function Footer() {
             Trendy Wear
           </h2>
           <div className="pb-1 border-b border-white/30">
-            <p className="text-sm font-medium tracking-wide">
+            <p className="text-md font-medium tracking-wide">
               The Destination for the Distinguished.
             </p>
           </div>
-          <p className="pt-4 text-xs text-red-100">
+          <p className="pt-4 text-sm text-red-100">
             © 2026 Trendy Wear. All rights reserved.
           </p>
         </div>
 
         {/* Right Section: Navigation Columns */}
-        <div className="flex-1 flex justify-between sm:px-8 md:px-16 lg:px-32">
+        <div className="w-full flex flex-wrap justify-center gap-12 md:w-auto md:flex-1 md:flex-nowrap md:justify-between md:px-16 lg:px-32">
           {footerColumns.map((col, idx) => (
             <div key={idx} className="flex flex-col space-y-6">
               <h3 className="text-[#F59E0B] text-lg font-bold">{col.title}</h3>
@@ -71,14 +71,14 @@ export default function Footer() {
                             router.push(link.href);
                           }
                         }}
-                        className="hover:text-white hover:underline transition text-left w-full"
+                        className="text-md hover:text-white hover:underline transition text-center w-full md:text-left"
                       >
                         {link.label}
                       </button>
                     ) : (
                       <Link
                         href={link.href}
-                        className="hover:text-white hover:underline transition"
+                        className="text-md hover:text-white hover:underline transition"
                       >
                         {link.label}
                       </Link>
