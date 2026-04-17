@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter} from 'next/navigation'; 
+import { usePathname, useRouter } from 'next/navigation';
 import { useCart } from '../context/CartContext';
 
-import { 
-  MdOutlineSearch, 
-  MdFavoriteBorder, 
-  MdOutlineShoppingCart, 
+import {
+  MdOutlineSearch,
+  MdFavoriteBorder,
+  MdOutlineShoppingCart,
   MdOutlinePersonOutline,
   MdLogout,
   MdAdminPanelSettings,
@@ -20,9 +20,9 @@ import { createClient } from "@/utils/supabase/client";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const pathname = usePathname(); 
+  const pathname = usePathname();
   const router = useRouter();
-  const {user, setUser} = useUser();
+  const { user, setUser } = useUser();
   const supabase = createClient();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,8 +62,12 @@ export default function Navbar() {
     return `${textBase} text-[#003049] border-transparent hover:bg-[#003049]/5`;
   };
 
+  const handleProfile = () => {
+    router.push("/profile");
+  };
+
   const handleOrders = () => {
-    router.push("/orders"); 
+    router.push("/orders");
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -79,18 +83,18 @@ export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [isAdmin, setIfAdmin] = useState(false);
 
-    useEffect(()=>{
+    useEffect(() => {
       checkIfAdmin().then(setIfAdmin)
-    },[])
+    }, [])
 
-    const handleLogout = async ()  => {
-      await supabase.auth.signOut(); 
-      setUser(null); 
+    const handleLogout = async () => {
+      await supabase.auth.signOut();
+      setUser(null);
       alert("You have been logged out.");
       window.location.href = "/";
     };
 
-    const checkIfAdmin = async() => {
+    const checkIfAdmin = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       const user_id = user?.id;
 
@@ -101,17 +105,17 @@ export default function Navbar() {
         .single()
 
       if (dbError) throw new Error(dbError.message)
-      
+
       return dbUser?.is_admin
     }
 
-    const buttonClass = label 
-      ? "flex items-center space-x-3 p-2 hover:bg-[#003049]/10 rounded transition w-full" 
+    const buttonClass = label
+      ? "flex items-center space-x-3 p-2 hover:bg-[#003049]/10 rounded transition w-full"
       : iconStyle;
 
     return (
       <div className="relative inline-block">
-        <button 
+        <button
           title={label}
           className={buttonClass}
           onClick={() => setIsOpen(!isOpen)}
@@ -124,27 +128,34 @@ export default function Navbar() {
             <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
             <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 shadow-xl rounded-lg py-1 z-50">
               <button
+                onClick={handleProfile}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors"
+              >
+                <MdOutlinePersonOutline size={18} />
+                Profile
+              </button>
+              <button
                 onClick={handleOrders}
                 className="w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors"
               >
                 <MdReceiptLong size={18} />
                 My Orders
               </button>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2 px-5 py-2 text-sm text-red-600 transition-colors"
               >
                 <MdLogout size={18} />
                 Logout
               </button>
-              {isAdmin&&(
-                <button 
-                onClick={()=>router.push("/admin")}
-                className="w-full flex items-center gap-2 px-5 py-2 text-sm text-red-600 transition-colors"
-              >
-                <MdAdminPanelSettings size={18} />
-                Admin
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => router.push("/admin")}
+                  className="w-full flex items-center gap-2 px-5 py-2 text-sm text-red-600 transition-colors"
+                >
+                  <MdAdminPanelSettings size={18} />
+                  Admin
+                </button>
               )}
             </div>
           </>
@@ -155,12 +166,12 @@ export default function Navbar() {
 
   return (
     <nav className="w-full bg-[#f8f9fa] border-b border-gray-300">
-      
-     {/* Backdrop */}
+
+      {/* Backdrop */}
       {isSearchOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-[90] animate-in fade-in duration-300" 
-          onClick={() => setIsSearchOpen(false)} 
+        <div
+          className="fixed inset-0 bg-black/50 z-[90] animate-in fade-in duration-300"
+          onClick={() => setIsSearchOpen(false)}
         />
       )}
 
@@ -182,7 +193,7 @@ export default function Navbar() {
             />
           </form>
 
-          <button 
+          <button
             type="button"
             onClick={() => setIsSearchOpen(false)}
             className="p-2 text-[#003049] hover:bg-gray-100 rounded-full transition-all flex flex-col items-center"
@@ -214,25 +225,25 @@ export default function Navbar() {
         {/* Right Icons / Hamburger */}
         <div className="flex-1 hidden lg:flex justify-evenly items-center">
           {icons.map((item, idx) => {
-              const restricted = ["Favorites", "Cart", "Account"];
-              if (item.label === "Account" && user) {
-                return <AccountDropdown key={idx} />;
-              }
-              return (
-                <button
-                  key={idx}
-                  className={getLinkStyle(item.href, true)}
-                  onClick={() => {
-                    if (item.label === "Search") {
-                      setIsSearchOpen(true);
-                    } else if (restricted.includes(item.label) && !user) {
-                      router.push("/login"); 
-                    } else if (item.href && item.label !== "Search") {
-                      router.push(item.href); 
-                    }                   
-                  }}
-                >
-                  <div className="relative">
+            const restricted = ["Favorites", "Cart", "Account"];
+            if (item.label === "Account" && user) {
+              return <AccountDropdown key={idx} />;
+            }
+            return (
+              <button
+                key={idx}
+                className={getLinkStyle(item.href, true)}
+                onClick={() => {
+                  if (item.label === "Search") {
+                    setIsSearchOpen(true);
+                  } else if (restricted.includes(item.label) && !user) {
+                    router.push("/login");
+                  } else if (item.href && item.label !== "Search") {
+                    router.push(item.href);
+                  }
+                }}
+              >
+                <div className="relative">
                   {item.icon}
                   {item.label === "Cart" && cartCount > 0 && (
                     <span
@@ -250,11 +261,11 @@ export default function Navbar() {
                     >
                       {cartCount}
                     </span>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Hamburger (Mobile Only) */}
@@ -295,10 +306,10 @@ export default function Navbar() {
                       setIsSearchOpen(true);
                       setMenuOpen(false);
                     } else if (restricted.includes(item.label) && !user) {
-                      router.push("/login"); 
+                      router.push("/login");
                     } else if (item.href && item.label !== "Search") {
-                      router.push(item.href); 
-                    }                   
+                      router.push(item.href);
+                    }
                   }}
                 >
                   <div className="relative">
