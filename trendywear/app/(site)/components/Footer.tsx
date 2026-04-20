@@ -29,7 +29,6 @@ export default function Footer() {
       links: [
         { label: "Contact Us", href: "/contact-us" },
         { label: "Shipping Info", href: "/track" },
-        { label: "Return", href: "/returns" },
         { label: "FAQ", href: "/faq" },
       ],
     },
