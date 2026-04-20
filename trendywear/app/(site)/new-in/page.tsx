@@ -1,7 +1,7 @@
 "use client";
 
 import Breadcrumb from "../components/Breadcrumb";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense  } from "react";
 import { Search } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import { fetchProducts, Product, SortOption } from "../lib/fetchProducts";
@@ -10,7 +10,7 @@ import { useSearchParams } from "next/navigation";
 
 const ITEMS_PER_PAGE = 8;
 
-export default function Page() {
+function NewInPage() {
   // ---- Fetch state ----
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -345,4 +345,18 @@ export default function Page() {
         </main>
       </div>
     );
+}
+
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center text-gray-400">
+          Loading…
+        </div>
+      }
+    >
+      <NewInPage />
+    </Suspense>
+  );
 }
