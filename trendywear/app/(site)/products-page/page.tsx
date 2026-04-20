@@ -21,7 +21,7 @@ function ProductsPageContent() {
 
   const [sortBy, setSortBy] = useState<SortOption>(null);
 
-  const [selectedSize, setSelectedSize] = useState("XS");
+  const [selectedSize, setSelectedSize] = useState("");
   const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [price, setPrice] = useState(5000);

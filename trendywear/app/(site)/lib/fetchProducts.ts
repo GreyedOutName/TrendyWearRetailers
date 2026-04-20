@@ -103,17 +103,17 @@ export async function fetchProducts(
     .select("item_id, color, size")
     .in("item_id", itemIds);
 
-const colorMap: Record<number, Set<string>> = {};
-const sizeMap: Record<number, Set<string>> = {};
-if (variants) {
-    for (const v of variants) {
-        if (!colorMap[v.item_id]) colorMap[v.item_id] = new Set();
-        colorMap[v.item_id].add(v.color);
+    const colorMap: Record<number, Set<string>> = {};
+    const sizeMap: Record<number, Set<string>> = {};
+    if (variants) {
+        for (const v of variants) {
+            if (!colorMap[v.item_id]) colorMap[v.item_id] = new Set();
+            colorMap[v.item_id].add(v.color);
 
-        if (!sizeMap[v.item_id]) sizeMap[v.item_id] = new Set();
-        sizeMap[v.item_id].add(v.size);
+            if (!sizeMap[v.item_id]) sizeMap[v.item_id] = new Set();
+            sizeMap[v.item_id].add(v.size);
+        }
     }
-}
 
     const mapped: Product[] = items.map((item) => {
         const imageUrls = (item.image_id ?? []).map(

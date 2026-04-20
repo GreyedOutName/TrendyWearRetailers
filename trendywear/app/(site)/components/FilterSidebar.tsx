@@ -23,7 +23,8 @@ type Props = {
     stickyTopClassName?: string;
 };
 
-const SECTIONS: Section[] = ["Category", "Colors", "Price Range", "Fit", "Ratings"];
+//const SECTIONS: Section[] = ["Category", "Colors", "Price Range", "Fit", "Ratings"];
+const SECTIONS: Section[] = ["Category", "Colors", "Price Range", "Ratings"];
 
 const COLOR_OPTIONS: { name: string; swatch: string }[] = [
     { name: "Black", swatch: "#111827" },
@@ -189,7 +190,7 @@ export default function FiltersSidebar({
                                         </div>
                                     )}
 
-                                    {/* FIT */}
+                                    {/* FIT ---REMOVED FOR NOW----
                                     {section === "Fit" && (
                                         <div className="space-y-3 pl-1">
                                             <p className="text-xs text-gray-500 font-medium">Select fit type(s)</p>
@@ -205,7 +206,7 @@ export default function FiltersSidebar({
                                                 ))}
                                             </div>
                                         </div>
-                                    )}
+                                    )}*/}
 
                                     {/* RATINGS — 0.5 increments */}
                                     {section === "Ratings" && (
