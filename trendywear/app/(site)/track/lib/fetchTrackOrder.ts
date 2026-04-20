@@ -14,7 +14,6 @@ export type TrackOrderData = {
   status: string;
   total: number;
   date: string;
-  dateShipped: string | null;
   dateDelivered: string | null;
   items: TrackOrderItem[];
 };
@@ -26,6 +25,8 @@ function formatDate(iso: string | null): string | null {
   });
 }
 
+const BUCKET_NAME = "images";
+
 export async function fetchTrackOrder(orderId: string): Promise<TrackOrderData | null> {
   const supabase = createClient();
 
@@ -36,7 +37,6 @@ export async function fetchTrackOrder(orderId: string): Promise<TrackOrderData |
       status,
       total_price,
       created_at,
-      date_shipped,
       date_delivered,
       order_items (
         quantity,
@@ -56,24 +56,26 @@ export async function fetchTrackOrder(orderId: string): Promise<TrackOrderData |
 
   if (error || !order) return null;
 
-  const items: TrackOrderItem[] = (order.order_items ?? []).map((oi: any) => ({
-    name: oi.item_variants?.items?.name ?? "Unknown",
-    image: oi.item_variants?.items?.image_id
-      ? `/products/${oi.item_variants.items.image_id}`
-      : "/images/placeholder.jpg",
-    color: oi.item_variants?.color ?? "-",
-    size: oi.item_variants?.size ?? "-",
-    quantity: oi.quantity,
-    price: oi.price_at_checkout,
-  }));
+  const items: TrackOrderItem[] = order.order_items.map((oi: any) => {
+    const imageUrls = (oi.item_variants?.items?.image_id ?? []).map(
+            (imgId: string) => supabase.storage.from(BUCKET_NAME).getPublicUrl(imgId).data.publicUrl
+        );
+    return{
+        name: oi.item_variants?.items?.name ?? "Unknown",
+        image: imageUrls.length > 0 ? imageUrls : ["/placeholder.jpg"],
+        color: oi.item_variants?.color ?? "-",
+        size: oi.item_variants?.size ?? "-",
+        quantity: oi.quantity,
+        price: oi.price_at_checkout,
+    }
+  });
 
   return {
     id: `TW-${String(order.id).padStart(6, "0")}`,
     status: order.status.replace(/'/g, "").trim().toLowerCase(),
     total: order.total_price,
     date: formatDate(order.created_at)!,
-    dateShipped: formatDate(order.date_shipped),
     dateDelivered: formatDate(order.date_delivered),
-    items,
+    items:items,
 };
 }

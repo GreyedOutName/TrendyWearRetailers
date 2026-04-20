@@ -7,6 +7,7 @@ import Image from "next/image";
 import Breadcrumb from "../components/Breadcrumb";
 import ProductCard from "../components/ProductCard";
 import { fetchTrackOrder, TrackOrderData, TrackOrderItem } from "./lib/fetchTrackOrder";
+import { fetchProducts } from "../lib/fetchProducts";
 
 type TrackingEvent = {
   date: string;
@@ -50,12 +51,13 @@ function TrackPageInner() {
   const [order, setOrder] = useState<TrackOrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
+  const [suggestedProducts, setSuggestedProducts] = useState<SuggestedProduct[]>([]);
 
   useEffect(() => {
     if (!orderId) {
       setLoading(false);
-      return;
     }
+    fetchProducts(null, null, null, null, false).then(setSuggestedProducts);
     fetchTrackOrder(orderId)
       .then(setOrder)
       .finally(() => setLoading(false));
@@ -83,14 +85,15 @@ function TrackPageInner() {
     { date: "Apr 10", time: "21:46", status: "Order preparing" },
     { date: "Apr 10", time: "20:50", status: "Order confirmed" },
   ];
-
+  /*
   const suggestedProducts: SuggestedProduct[] = [
-    { id: 101, name: "Classic Wide-Leg Denim", images: ["/products/p1.jpg"], price: 1299, rating: 4.8, reviews: 124, is_liked: false, colors: ["#D8D2C8", "#1F2937"] },
-    { id: 102, name: "Relaxed Black Polo", images: ["/products/p2.jpg"], oldPrice: 1599, price: 1399, rating: 4.7, reviews: 98, is_liked: false, colors: ["#111827", "#E5E7EB"] },
-    { id: 103, name: "Minimal Knit Top", images: ["/products/p3.jpg"], price: 999, rating: 4.6, reviews: 86, is_liked: false, colors: ["#F5E6CC", "#FFFFFF"] },
-    { id: 104, name: "Essential Straight Pants", images: ["/products/p4.jpg"], price: 1499, rating: 4.9, reviews: 143, is_liked: false, colors: ["#374151", "#C7B9A5"] },
-    { id: 105, name: "Striped Dolman Polo", images: ["/products/p5.jpg"], price: 1399, rating: 4.5, reviews: 76, is_liked: false, colors: ["#F4F1EA", "#E8DFC8"] },
-  ];
+    { id: 101, name: "Classic Wide-Leg Denim", images: ["https://zbsbowihpgcjrsvhldci.supabase.co/storage/v1/object/public/images/Women/Tops/j1.webp"], price: 1299, rating: 4.8, reviews: 124, is_liked: false, colors: ["#D8D2C8", "#1F2937"] },
+    { id: 102, name: "Relaxed Black Polo", images: ["https://zbsbowihpgcjrsvhldci.supabase.co/storage/v1/object/public/images/Women/Tops/j1.webp"], oldPrice: 1599, price: 1399, rating: 4.7, reviews: 98, is_liked: false, colors: ["#111827", "#E5E7EB"] },
+    { id: 103, name: "Minimal Knit Top", images: ["https://zbsbowihpgcjrsvhldci.supabase.co/storage/v1/object/public/images/Women/Tops/j1.webp"], price: 999, rating: 4.6, reviews: 86, is_liked: false, colors: ["#F5E6CC", "#FFFFFF"] },
+    { id: 104, name: "Essential Straight Pants", images: ["https://zbsbowihpgcjrsvhldci.supabase.co/storage/v1/object/public/images/Women/Tops/j1.webp"], price: 1499, rating: 4.9, reviews: 143, is_liked: false, colors: ["#374151", "#C7B9A5"] },
+    { id: 105, name: "Striped Dolman Polo", images: ["https://zbsbowihpgcjrsvhldci.supabase.co/storage/v1/object/public/images/Women/Tops/j1.webp"], price: 1399, rating: 4.5, reviews: 76, is_liked: false, colors: ["#F4F1EA", "#E8DFC8"] },
+  ];*/
+
 
   const orderItems: OrderItem[] = (order?.items ?? []).map((item: TrackOrderItem, i: number) => ({
     id: i,
@@ -105,7 +108,7 @@ function TrackPageInner() {
   const previewEvents = events.slice(0, 2);
   const totalItems = orderItems.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = order?.total ?? 0;
-
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center">
@@ -182,11 +185,6 @@ function TrackPageInner() {
           <div className="bg-[#EDF6F4] rounded-[22px] p-5 md:p-6 mb-8 border border-[#D6EAE5]">
             <p className="text-sm text-[#003049]/60 mb-1">Status</p>
             <p className="text-[24px] md:text-[28px] font-bold text-[#003049] capitalize">{order.status}</p>
-            {order.dateShipped && (
-              <p className="text-[18px] font-semibold text-[#2A9D8F] mt-1">
-                Shipped: {order.dateShipped}
-              </p>
-            )}
             {order.dateDelivered && (
               <p className="text-[18px] font-semibold text-[#2A9D8F] mt-1">
                 Delivered: {order.dateDelivered}
@@ -256,7 +254,7 @@ function TrackPageInner() {
             <h2 className="text-[28px] font-semibold text-[#003049]">You might like:</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6">
-            {suggestedProducts.map((product) => (
+            {suggestedProducts.slice(0, 5).map((product) => (
               <ProductCard key={product.id} {...product} />
             ))}
           </div>
@@ -297,7 +295,7 @@ function OrderSummaryItem({ item }: { item: OrderItem }) {
     <div className="py-5 flex items-center justify-between gap-6">
       <div className="flex items-center gap-4 min-w-0">
         <div className="relative w-[92px] h-[112px] rounded-[18px] overflow-hidden border border-gray-200 bg-[#F9F9F9] shrink-0">
-          <Image src={item.image} alt={item.name} fill className="object-cover" />
+          <Image src={item.image[0]} alt={item.name} fill className="object-cover" />
         </div>
         <div className="min-w-0">
           <h3 className="text-[17px] font-semibold text-[#003049] line-clamp-2">{item.name}</h3>
