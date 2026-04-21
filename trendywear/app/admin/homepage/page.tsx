@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
+import Dropzone from "react-dropzone";
 import {
     FiChevronDown,
     FiChevronRight,
@@ -18,6 +20,7 @@ import {
     FiType,
     FiUpload,
 } from "react-icons/fi";
+import { ProductImageCropModal } from "../products/ProductImageCropModal";
 
 type SectionCardProps = {
     icon: React.ReactNode;
@@ -221,50 +224,144 @@ function UploadCard({
     description: string;
     compact?: boolean;
 }) {
+    const [selectedImage, setSelectedImage] = useState<{
+        id: string;
+        file: File;
+        preview: string;
+    } | null>(null);
+    const [sourceImage, setSourceImage] = useState<{
+        file: File;
+        preview: string;
+    } | null>(null);
+
+    const onSelectFile = (file: File) => {
+        const preview = URL.createObjectURL(file);
+        setSourceImage({ file, preview });
+    };
+
+    const handleDrop = (acceptedFiles: File[]) => {
+        if (!acceptedFiles.length) return;
+        onSelectFile(acceptedFiles[0]);
+    };
+
+    const replaceFromCrop = (file: File) => {
+        setSelectedImage((prev) => {
+            if (prev) URL.revokeObjectURL(prev.preview);
+            return { id: crypto.randomUUID(), file, preview: URL.createObjectURL(file) };
+        });
+    };
+
+    const clearSelectedImage = () => {
+        setSelectedImage((prev) => {
+            if (prev) URL.revokeObjectURL(prev.preview);
+            return null;
+        });
+    };
+
     return (
-        <div className="rounded-[24px] border border-dashed border-[#ead8d2] bg-white p-4">
-            <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#F7F3F2] text-[#C1121F] shadow-sm md:h-12 md:w-12">
-                    <FiImage size={20} />
+        <>
+            {sourceImage && (
+                <ProductImageCropModal
+                    imageSrc={sourceImage.preview}
+                    fileName={sourceImage.file.name}
+                    onClose={() => {
+                        URL.revokeObjectURL(sourceImage.preview);
+                        setSourceImage(null);
+                    }}
+                    onApply={(file) => {
+                        replaceFromCrop(file);
+                        URL.revokeObjectURL(sourceImage.preview);
+                        setSourceImage(null);
+                    }}
+                />
+            )}
+            <div className="rounded-[24px] border border-dashed border-[#ead8d2] bg-white p-4">
+                <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#F7F3F2] text-[#C1121F] shadow-sm md:h-12 md:w-12">
+                        <FiImage size={20} />
+                    </div>
+
+                    <div className="min-w-0">
+                        <h4 className="text-[17px] font-semibold leading-7 text-[#111827] md:text-[18px]">
+                            {title}
+                        </h4>
+                        <p className="mt-1 text-[13px] leading-6 text-[#6b7280] md:text-[14px]">
+                            {description}
+                        </p>
+                    </div>
                 </div>
 
-                <div className="min-w-0">
-                    <h4 className="text-[17px] font-semibold leading-7 text-[#111827] md:text-[18px]">
-                        {title}
-                    </h4>
-                    <p className="mt-1 text-[13px] leading-6 text-[#6b7280] md:text-[14px]">
-                        {description}
-                    </p>
-                </div>
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-3">
-                <button
-                    type="button"
-                    className="inline-flex items-center gap-2 rounded-full bg-[#C1121F] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+                <Dropzone
+                    onDrop={handleDrop}
+                    accept={{ "image/*": [] }}
+                    multiple={false}
                 >
-                    <FiUpload size={15} />
-                    Upload image
-                </button>
+                    {({ getRootProps, getInputProps, open }) => (
+                        <>
+                            <div className="mt-5 flex flex-wrap gap-3">
+                                <button
+                                    type="button"
+                                    onClick={open}
+                                    className="inline-flex items-center gap-2 rounded-full bg-[#C1121F] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+                                >
+                                    <FiUpload size={15} />
+                                    Upload image
+                                </button>
 
-                <button
-                    type="button"
-                    className="inline-flex items-center gap-2 rounded-full border border-[#e4d7d2] bg-white px-5 py-2.5 text-sm font-medium text-[#374151] transition hover:border-[#C1121F]/30 hover:text-[#C1121F]"
-                >
-                    <FiEdit3 size={15} />
-                    Replace
-                </button>
-            </div>
+                                <button
+                                    type="button"
+                                    onClick={open}
+                                    className="inline-flex items-center gap-2 rounded-full border border-[#e4d7d2] bg-white px-5 py-2.5 text-sm font-medium text-[#374151] transition hover:border-[#C1121F]/30 hover:text-[#C1121F]"
+                                >
+                                    <FiEdit3 size={15} />
+                                    Replace
+                                </button>
 
-            <div
-                className={`mt-5 overflow-hidden rounded-[20px] border border-[#f0e8e5] bg-[#F5F1F0] ${compact ? "aspect-[4/3]" : "aspect-[16/10]"
+                                {selectedImage && (
+                                    <button
+                                        type="button"
+                                        onClick={clearSelectedImage}
+                                        className="inline-flex items-center gap-2 rounded-full border border-[#f1d1d1] bg-white px-5 py-2.5 text-sm font-medium text-[#C1121F] transition hover:bg-[#fff6f6]"
+                                    >
+                                        <FiTrash2 size={15} />
+                                        Remove
+                                    </button>
+                                )}
+                            </div>
+
+                            <div
+                                {...getRootProps()}
+                                className="mt-4 cursor-pointer rounded-[16px] border border-dashed border-[#ead8d2] bg-[#fcfbfa] px-4 py-3 text-center text-xs text-[#6b7280] transition hover:border-[#C1121F]/30"
+                            >
+                                <input {...getInputProps()} />
+                                Drag image here, or click to select and crop
+                            </div>
+                        </>
+                    )}
+                </Dropzone>
+
+                <div
+                    className={`mt-5 overflow-hidden rounded-[20px] border border-[#f0e8e5] bg-[#F5F1F0] ${
+                        compact ? "aspect-[4/3]" : "aspect-[16/10]"
                     }`}
-            >
-                <div className="flex h-full items-center justify-center text-sm text-[#9CA3AF]">
-                    Image preview
+                >
+                    {selectedImage ? (
+                        <Image
+                            src={selectedImage.preview}
+                            alt={title}
+                            width={800}
+                            height={600}
+                            className="h-full w-full object-cover"
+                            unoptimized
+                        />
+                    ) : (
+                        <div className="flex h-full items-center justify-center text-sm text-[#9CA3AF]">
+                            Image preview
+                        </div>
+                    )}
                 </div>
             </div>
-        </div>
+        </>
     );
 }
 
